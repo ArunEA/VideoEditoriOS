@@ -115,7 +115,7 @@ extension ViewController: TrimViewDelegate {
 		
 	}
 	
-	func trimStateChanged(isTrimming: Bool, cell: VideoTimelineViewCell) {
+	func trimStateChanged(isTrimming: Bool, cell: TrimTimelineView) {
 		if isTrimming {
 			self.navigationItem.rightBarButtonItem = trimButton
 			self.navigationItem.leftBarButtonItem = cancelButton

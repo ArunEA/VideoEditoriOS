@@ -1,5 +1,5 @@
 //
-//  TrimTimelineView.swift
+//  VideoTimelineViewCell.swift
 //  VideoEditorSample
 //
 //  Created by KnilaDev on 09/03/21.
@@ -34,10 +34,35 @@ class TrimTimelineView: UIView {
 		self.videoAsset = asset
 		self.imageView.image = asset?.thumbnailImage
 		
-		guard let tAsset = self.videoAsset else { return }
+		self.reloadView()
+	}
+	
+	func reloadView() {
+		guard let videoAsset = self.videoAsset else { return }
 		
-		imageViewLeading.constant = -tAsset.startTrim * self.frame.size.width
-		imageViewTrailing.constant = tAsset.endTrim * self.frame.size.width
+		if isTrimming {
+			leftEarWidth.constant = 20
+			rightEarWidth.constant = 20
+			imageViewLeading.constant = 20
+			imageViewTrailing.constant = -20
+			trimView.isHidden = false
+			
+			guard let tAsset = self.videoAsset else { return }
+			
+			leftEarLeading.constant = tAsset.startTrim * videoAsset.widthForCell().width
+			rightEarTrailing.constant = -tAsset.endTrim * videoAsset.widthForCell().width
+		} else {
+			leftEarWidth.constant = 0
+			rightEarWidth.constant = 0
+			trimView.isHidden = true
+			leftEarLeading.constant = 0
+			rightEarTrailing.constant = 0
+			
+			guard let tAsset = self.videoAsset else { return }
+			
+			imageViewLeading.constant = -tAsset.startTrim * videoAsset.widthForCell().width
+			imageViewTrailing.constant = tAsset.endTrim * videoAsset.widthForCell().width
+		}
 	}
 	
 	override func didMoveToWindow() {
@@ -109,31 +134,7 @@ class TrimTimelineView: UIView {
 	}
 	
 	private func trimStateChanged() {
-		guard let videoAsset = self.videoAsset else { return }
-		
-		if isTrimming {
-			leftEarWidth.constant = 20
-			rightEarWidth.constant = 20
-			imageViewLeading.constant = 20
-			imageViewTrailing.constant = -20
-			trimView.isHidden = false
-			
-			guard let tAsset = self.videoAsset else { return }
-			
-			leftEarLeading.constant = tAsset.startTrim * videoAsset.widthForCell().width
-			rightEarTrailing.constant = -tAsset.endTrim * videoAsset.widthForCell().width
-		} else {
-			leftEarWidth.constant = 0
-			rightEarWidth.constant = 0
-			trimView.isHidden = true
-			leftEarLeading.constant = 0
-			rightEarTrailing.constant = 0
-			
-			guard let tAsset = self.videoAsset else { return }
-			
-			imageViewLeading.constant = -tAsset.startTrim * videoAsset.widthForCell().width
-			imageViewTrailing.constant = tAsset.endTrim * videoAsset.widthForCell().width
-		}
+		self.reloadView()
 		
 		self.videoAsset?.isTrimming = isTrimming
 		delegate?.trimStateChanged(isTrimming: isTrimming, cell: self)

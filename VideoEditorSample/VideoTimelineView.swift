@@ -10,7 +10,9 @@ import AVFoundation
 
 class VideoTimelineView: UIView {
 	
-	private var currentTrimCell: VideoTimelineViewCell?
+	private var currentTrimView: TrimTimelineView?
+	private var allTimelineConstraints = [NSLayoutConstraint]()
+	
 	weak var delegate: TrimViewDelegate?
 	
 	var assets = [VideoAsset]()
@@ -27,83 +29,106 @@ class VideoTimelineView: UIView {
 		commonInit()
 	}
 	
-	private lazy var collectionView: UICollectionView = {
-		let layout = UICollectionViewFlowLayout()
-		layout.scrollDirection = .horizontal
+	private lazy var scrollView: UIScrollView = {
+		let scrollView = UIScrollView()
+		scrollView.translatesAutoresizingMaskIntoConstraints = false
 		
-		let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
-		collectionView.translatesAutoresizingMaskIntoConstraints = false
-		collectionView.dataSource = self
-		collectionView.delegate = self
-		
-		collectionView.register(VideoTimelineViewCell.self,
-								forCellWithReuseIdentifier: VideoTimelineViewCell.reuseId)
-		
-		return collectionView
+		return scrollView
 	}()
 	
+	private lazy var contentView: UIView = {
+		let view = UIView()
+		view.backgroundColor = .black
+		view.translatesAutoresizingMaskIntoConstraints = false
+		
+		return view
+	}()
 	
 	func addAsset(_ asset: AVAsset) {
 		let videoAsset = VideoAsset(with: asset)
-//		videoAsset.startTrim = 0.3
-//		videoAsset.endTrim = 0.3
 		
 		ThumblineGenerator.shared.thumbnails(for: asset) { [weak self] (image) in
 			DispatchQueue.main.async {
 				videoAsset.thumbnailImage = image
-				
-				self?.collectionView.reloadData()
+				self?.addNewAsset(videoAsset)
 			}
 		}
-		
-		assets.append(videoAsset)
 	}
 	
 	func commonInit() {
 		setConstraints()
 	}
 	
-	private func setConstraints() {
-		self.addSubview(collectionView)
+	func reloadTimeline() {
+		guard contentView.subviews.count == self.assets.count else {
+			assertionFailure("Scroll View should have same number of timeline view as assets")
+			return
+		}
 		
-		let lineView = LineView(frame: .zero)
-		collectionView.addSubview(lineView)
+		var lastTimelineView: UIView = UIView()
+		NSLayoutConstraint.deactivate(allTimelineConstraints)
+		allTimelineConstraints.removeAll()
+		
+		for idx in 0..<self.assets.count {
+			let videoAsset = self.assets[idx]
+			let timelineView = contentView.subviews[idx]
+			let assetWidth = videoAsset.widthForCell(isTrimming: videoAsset.isTrimming).width
+			
+			var constraints = [
+				timelineView.topAnchor.constraint(equalTo: contentView.topAnchor),
+				timelineView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+				timelineView.widthAnchor.constraint(equalToConstant: assetWidth)
+			]
+			
+			if idx == 0 {
+				constraints += [timelineView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor)]
+			} else {
+				constraints += [timelineView.leadingAnchor.constraint(equalTo: lastTimelineView.trailingAnchor)]
+			}
+			
+			if idx == self.assets.count - 1 {
+				constraints += [timelineView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor)]
+			}
+			
+			allTimelineConstraints.append(contentsOf: constraints)
+			NSLayoutConstraint.activate(constraints)
+			
+			(timelineView as? TrimTimelineView)?.configure(videoAsset)
+			lastTimelineView = timelineView
+		}
+	}
+	
+	func addNewAsset(_ asset: VideoAsset) {
+		self.assets.append(asset)
+		
+		let timelineView = TrimTimelineView()
+		timelineView.translatesAutoresizingMaskIntoConstraints = false
+		timelineView.delegate = self
+		
+		contentView.addSubview(timelineView)
+		
+		reloadTimeline()
+	}
+	
+	private func setConstraints() {
+		self.addSubview(scrollView)
+		scrollView.addSubview(contentView)
 		
 		let constraints = [
-			lineView.leadingAnchor.constraint(equalTo: collectionView.leadingAnchor),
-			lineView.topAnchor.constraint(equalTo: collectionView.topAnchor),
-			lineView.widthAnchor.constraint(equalToConstant: 50),
-			lineView.heightAnchor.constraint(equalToConstant: 50),
+			scrollView.leadingAnchor.constraint(equalTo: self.leadingAnchor),
+			scrollView.trailingAnchor.constraint(equalTo: self.trailingAnchor),
+			scrollView.topAnchor.constraint(equalTo: self.topAnchor),
+			scrollView.bottomAnchor.constraint(equalTo: self.bottomAnchor),
+			scrollView.heightAnchor.constraint(equalToConstant: 55),
 			
-			collectionView.leadingAnchor.constraint(equalTo: self.leadingAnchor),
-			collectionView.trailingAnchor.constraint(equalTo: self.trailingAnchor),
-			collectionView.topAnchor.constraint(equalTo: self.topAnchor),
-			collectionView.bottomAnchor.constraint(equalTo: self.bottomAnchor)
+			contentView.heightAnchor.constraint(equalTo: scrollView.heightAnchor),
+			contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
+			contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
+			contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
+			contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor)
 		]
 		
 		NSLayoutConstraint.activate(constraints)
-	}
-}
-
-extension VideoTimelineView: UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
-	func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-		return assets.count
-	}
-	
-	func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-		guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: VideoTimelineViewCell.reuseId, for: indexPath) as? VideoTimelineViewCell else {
-			return UICollectionViewCell()
-		}
-		cell.configure(self.assets[indexPath.item])
-		cell.delegate = self
-		
-		return cell
-	}
-	
-	func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-		let videoAsset = self.assets[indexPath.item]
-		
-		return videoAsset.widthForCell(isTrimming: videoAsset.isTrimming)
 	}
 }
 
@@ -112,24 +137,23 @@ extension VideoTimelineView: TrimViewDelegate {
 		
 	}
 	
-	func trimStateChanged(isTrimming: Bool, cell: VideoTimelineViewCell) {
+	func trimStateChanged(isTrimming: Bool, cell: TrimTimelineView) {
 		delegate?.trimStateChanged(isTrimming: isTrimming, cell: cell)
+		currentTrimView = isTrimming ? cell : nil
 		
-		collectionView.collectionViewLayout.invalidateLayout()
-		currentTrimCell = isTrimming ? cell : nil
+		reloadTimeline()
 	}
 }
 
 extension VideoTimelineView {
 	func applyTrim() {
-		currentTrimCell?.isTrimming = false
-		collectionView.collectionViewLayout.invalidateLayout()
-		collectionView.reloadData()
+		currentTrimView?.isTrimming = false
+		reloadTimeline()
 	}
 	
 	func cancelTrim() {
-		currentTrimCell?.videoAsset?.startTrim = 0
-		currentTrimCell?.videoAsset?.endTrim = 0
-		currentTrimCell?.isTrimming = false
+		currentTrimView?.videoAsset?.startTrim = 0
+		currentTrimView?.videoAsset?.endTrim = 0
+		currentTrimView?.isTrimming = false
 	}
 }
