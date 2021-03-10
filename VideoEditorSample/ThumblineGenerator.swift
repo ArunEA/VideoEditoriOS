@@ -12,11 +12,11 @@ struct ThumblineGenerator {
 	
 	static let shared: ThumblineGenerator = ThumblineGenerator()
 	
-	var thumbnailFrameSize:CGSize = CGSize(width: 400,height: 300)
-	var timeTolerance = CMTimeMakeWithSeconds(10 , preferredTimescale:100)
+	var thumbnailFrameSize: CGSize = CGSize(width: Constants.eachFrameWidth, height: Constants.eachFrameHeight)
+	var timeTolerance = CMTimeMakeWithSeconds(Constants.eachPreviewDuration, preferredTimescale:100)
 	var frameImagesArray: [UIImage] = []
 	let preferredTimescale:Int32 = 100
-	let durationBetweenFrames: Int = 10
+	let durationBetweenFrames = Constants.eachPreviewDuration
 	
 	func thumbnails(for asset: AVAsset, completion: @escaping (UIImage)->Void) {
 		requestAll(for: asset, completion: completion)
@@ -24,7 +24,8 @@ struct ThumblineGenerator {
 	
 	func requestAll(for asset: AVAsset, completion: @escaping (UIImage)->Void) {
 		var timesArray = [NSValue]()
-		for index in 0 ..< durationBetweenFrames {
+		let assetDuration = CMTimeGetSeconds(asset.duration)
+		for index in 0 ..< Int(assetDuration/durationBetweenFrames) {
 			timesArray += [NSValue(time: CMTimeMakeWithSeconds(timeWithIndex(index, for: asset) , preferredTimescale:preferredTimescale))]
 		}
 		
@@ -39,7 +40,7 @@ struct ThumblineGenerator {
 	func requestImageGeneration(for asset: AVAsset, timesArray:[NSValue], completion: @escaping ([UIImage])->Void) {
 		let assetImgGenerate: AVAssetImageGenerator = AVAssetImageGenerator(asset: asset)
 		assetImgGenerate.appliesPreferredTrackTransform = true
-		let maxsize = CGSize(width: thumbnailFrameSize.width * 1.5, height: thumbnailFrameSize.height * 1.5)
+		let maxsize = CGSize(width: thumbnailFrameSize.width, height: thumbnailFrameSize.height)
 		assetImgGenerate.maximumSize = maxsize
 		assetImgGenerate.requestedTimeToleranceAfter = timeTolerance
 		assetImgGenerate.requestedTimeToleranceBefore = timeTolerance
@@ -55,6 +56,8 @@ struct ThumblineGenerator {
 						completion(resultant)
 					}
 				}
+			} else {
+				completion(resultant)
 			}
 		})
 	}

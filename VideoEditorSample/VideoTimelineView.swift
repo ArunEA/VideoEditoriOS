@@ -44,6 +44,15 @@ class VideoTimelineView: UIView {
 		return view
 	}()
 	
+	private lazy var lineView: LineView = {
+		let view = LineView()
+		view.translatesAutoresizingMaskIntoConstraints = false
+		
+		return view
+	}()
+	
+	private var lineViewLeading = NSLayoutConstraint()
+	
 	func addAsset(_ asset: AVAsset) {
 		let videoAsset = VideoAsset(with: asset)
 		
@@ -113,19 +122,26 @@ class VideoTimelineView: UIView {
 	private func setConstraints() {
 		self.addSubview(scrollView)
 		scrollView.addSubview(contentView)
+		scrollView.addSubview(lineView)
+		
+		lineViewLeading = lineView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor)
 		
 		let constraints = [
 			scrollView.leadingAnchor.constraint(equalTo: self.leadingAnchor),
 			scrollView.trailingAnchor.constraint(equalTo: self.trailingAnchor),
 			scrollView.topAnchor.constraint(equalTo: self.topAnchor),
 			scrollView.bottomAnchor.constraint(equalTo: self.bottomAnchor),
-			scrollView.heightAnchor.constraint(equalToConstant: 55),
 			
 			contentView.heightAnchor.constraint(equalTo: scrollView.heightAnchor),
 			contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
 			contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
 			contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
-			contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor)
+			contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
+			
+			lineViewLeading,
+			lineView.widthAnchor.constraint(equalToConstant: 2),
+			lineView.topAnchor.constraint(equalTo: scrollView.topAnchor),
+			lineView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor)
 		]
 		
 		NSLayoutConstraint.activate(constraints)
@@ -155,5 +171,11 @@ extension VideoTimelineView {
 		currentTrimView?.videoAsset?.startTrim = 0
 		currentTrimView?.videoAsset?.endTrim = 0
 		currentTrimView?.isTrimming = false
+	}
+	
+	func updateProgress(_ progress: Float) {
+		if let timelineWidth = self.assets.first?.widthForCell(isTrimming: false) {
+			lineViewLeading.constant = timelineWidth.width * CGFloat(progress)
+		}
 	}
 }

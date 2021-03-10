@@ -23,6 +23,7 @@
 		8D020E5B25F7920E0037FBD4 /* VideoAsset.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D020E5A25F7920E0037FBD4 /* VideoAsset.swift */; };
 		8D020E5E25F8964E0037FBD4 /* LineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D020E5D25F8964E0037FBD4 /* LineView.swift */; };
 		8D020E6225F8CE2A0037FBD4 /* UIKitExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D020E6125F8CE2A0037FBD4 /* UIKitExtensions.swift */; };
+		8D020E6525F8DD550037FBD4 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D020E6425F8DD550037FBD4 /* Constants.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -44,6 +45,7 @@
 		8D020E5A25F7920E0037FBD4 /* VideoAsset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoAsset.swift; sourceTree = "<group>"; };
 		8D020E5D25F8964E0037FBD4 /* LineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LineView.swift; sourceTree = "<group>"; };
 		8D020E6125F8CE2A0037FBD4 /* UIKitExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIKitExtensions.swift; sourceTree = "<group>"; };
+		8D020E6425F8DD550037FBD4 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -86,13 +88,14 @@
 				8D020E2825F600C60037FBD4 /* ThumblineGenerator.swift */,
 				8D020E2B25F60C7F0037FBD4 /* sample-mp4-file.mp4 */,
 				8D020E5325F781AA0037FBD4 /* file_example_MP4_640_3MG.mp4 */,
-				8D020E4925F7319E0037FBD4 /* TrimTimelineView.swift */,
 				8D020E4F25F766320037FBD4 /* VideoTimelineView.swift */,
+				8D020E4925F7319E0037FBD4 /* TrimTimelineView.swift */,
 				8D020E4C25F73E290037FBD4 /* EarView.swift */,
 				8D020E5725F78CA80037FBD4 /* VideoEditHelper.swift */,
 				8D020E5A25F7920E0037FBD4 /* VideoAsset.swift */,
 				8D020E5D25F8964E0037FBD4 /* LineView.swift */,
 				8D020E6125F8CE2A0037FBD4 /* UIKitExtensions.swift */,
+				8D020E6425F8DD550037FBD4 /* Constants.swift */,
 			);
 			path = VideoEditorSample;
 			sourceTree = "<group>";
@@ -180,6 +183,7 @@
 				8D020E5E25F8964E0037FBD4 /* LineView.swift in Sources */,
 				8D020E6225F8CE2A0037FBD4 /* UIKitExtensions.swift in Sources */,
 				8D020E4D25F73E290037FBD4 /* EarView.swift in Sources */,
+				8D020E6525F8DD550037FBD4 /* Constants.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

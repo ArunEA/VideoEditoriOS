@@ -143,7 +143,7 @@ class TrimTimelineView: UIView {
 	internal lazy var imageView: UIImageView = {
 		let imageView = UIImageView()
 		imageView.translatesAutoresizingMaskIntoConstraints = false
-		imageView.contentMode = .scaleToFill
+		imageView.contentMode = .scaleAspectFit
 		imageView.clipsToBounds = true
 		imageView.isUserInteractionEnabled = true
 		

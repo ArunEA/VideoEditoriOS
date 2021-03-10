@@ -21,13 +21,13 @@ class VideoAsset {
 	
 	func widthForCell(isTrimming: Bool = true) -> CGSize {
 		guard let asset = self.asset else { return .zero }
-		let numberOfFrames = CMTimeGetSeconds(asset.duration) / 10
+		let numberOfFrames = CMTimeGetSeconds(asset.duration) / Constants.eachPreviewDuration
 		
 		if isTrimming {
-			return CGSize(width: numberOfFrames * 55, height: 100)
+			return CGSize(width: numberOfFrames * Constants.eachFrameWidth, height: Constants.eachFrameHeight)
 		} else {
 			let numberOfFramesAfterTrim = numberOfFrames * Double(1 - (startTrim + endTrim))
-			return CGSize(width: numberOfFramesAfterTrim * 55, height: 100)
+			return CGSize(width: numberOfFramesAfterTrim * Constants.eachFrameWidth, height: Constants.eachFrameHeight)
 		}
 	}
 }

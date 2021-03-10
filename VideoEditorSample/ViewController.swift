@@ -48,7 +48,7 @@ class ViewController: UIViewController {
 		let asset1 = AVAsset(url: URL(fileURLWithPath: Bundle.main.path(forResource: "sample-mp4-file", ofType:"mp4")!))
 		let asset2 = AVAsset(url: URL(fileURLWithPath: Bundle.main.path(forResource: "file_example_MP4_640_3MG", ofType:"mp4")!))
 		timelineView.addAsset(asset1)
-		timelineView.addAsset(asset2)
+		//timelineView.addAsset(asset2)
 
 		self.navigationItem.rightBarButtonItem = mergeButton
 		
@@ -65,7 +65,7 @@ class ViewController: UIViewController {
 			timelineView.leadingAnchor.constraint(equalTo: margin.leadingAnchor),
 			timelineView.trailingAnchor.constraint(equalTo: margin.trailingAnchor),
 			timelineView.bottomAnchor.constraint(equalTo: margin.bottomAnchor),
-			timelineView.heightAnchor.constraint(equalToConstant: 100)
+			timelineView.heightAnchor.constraint(equalToConstant: CGFloat(Constants.eachFrameHeight))
 		]
 		
 		NSLayoutConstraint.activate(constraints)
@@ -87,6 +87,25 @@ class ViewController: UIViewController {
 		playerLayer.videoGravity = .resizeAspect
 		
 		self.videoContainerView.layer.addSublayer(playerLayer)
+		
+		self.player?.addPeriodicTimeObserver(forInterval: CMTime(seconds: 1, preferredTimescale: 2), queue: DispatchQueue.main) {[weak self] (progressTime) in
+			if let duration = self?.player?.currentItem?.duration {
+				
+				let durationSeconds = CMTimeGetSeconds(duration)
+				let seconds = CMTimeGetSeconds(progressTime)
+				let progress = Float(seconds/durationSeconds)
+				
+				DispatchQueue.main.async {
+					if progress >= 1.0 || progress.isNaN {
+						self?.timelineView.updateProgress(0)
+					} else {
+						self?.timelineView.updateProgress(progress)
+					}
+				}
+			}
+		}
+		
+		self.player?.play()
 	}
 	
 	@objc func merge() {
