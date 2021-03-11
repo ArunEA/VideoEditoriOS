@@ -31,6 +31,7 @@ class ViewController: UIViewController {
 	private lazy var playbackControls: PlaybackControl = {
 		let control = PlaybackControl()
 		control.translatesAutoresizingMaskIntoConstraints = false
+		control.isUserInteractionEnabled = false
 		control.delegate = self
 		
 		return control
@@ -82,7 +83,7 @@ class ViewController: UIViewController {
 			videoContainerView.trailingAnchor.constraint(equalTo: margin.trailingAnchor),
 			videoContainerView.topAnchor.constraint(equalTo: margin.topAnchor),
 			
-			playbackControls.bottomAnchor.constraint(equalTo: timelineView.topAnchor, constant: 10),
+			playbackControls.bottomAnchor.constraint(equalTo: timelineView.topAnchor, constant: -10),
 			playbackControls.centerXAnchor.constraint(equalTo: view.centerXAnchor),
 			
 			timelineView.topAnchor.constraint(equalTo: videoContainerView.bottomAnchor),
@@ -127,6 +128,7 @@ class ViewController: UIViewController {
 	
 	private func processAsset(_ asset: AVAsset) {
 		timelineView.addAsset(asset)
+		playbackControls.isUserInteractionEnabled = true
 		
 		if let currentAsset = self.currentAsset {
 			

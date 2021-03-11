@@ -60,6 +60,9 @@ class PlaybackControl: UIView {
 	}
 	
 	private func commonInit() {
+		self.backgroundColor = #colorLiteral(red: 0.5741485357, green: 0.5741624236, blue: 0.574154973, alpha: 0.5)
+		self.layer.cornerRadius = 10
+		
 		setConstraints()
 		setupEventHandlers()
 	}
@@ -76,18 +79,18 @@ class PlaybackControl: UIView {
 		addSubview(rewindButton)
 		
 		var constraints = [
-			rewindButton.leadingAnchor.constraint(equalTo: self.leadingAnchor, constant: 20),
-			playButton.leadingAnchor.constraint(equalTo: rewindButton.trailingAnchor, constant: 20),
-			forwardButton.leadingAnchor.constraint(equalTo: playButton.trailingAnchor, constant: 20),
-			forwardButton.trailingAnchor.constraint(equalTo: self.trailingAnchor, constant: -20)
+			rewindButton.leadingAnchor.constraint(equalTo: self.leadingAnchor, constant: 10),
+			playButton.leadingAnchor.constraint(equalTo: rewindButton.trailingAnchor, constant: 10),
+			forwardButton.leadingAnchor.constraint(equalTo: playButton.trailingAnchor, constant: 10),
+			forwardButton.trailingAnchor.constraint(equalTo: self.trailingAnchor, constant: -10)
 		]
 		
 		[rewindButton, forwardButton, playButton].forEach { (button) in
 			constraints += [
-				button.topAnchor.constraint(equalTo: self.topAnchor, constant: 20),
-				button.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: -20),
-				button.heightAnchor.constraint(equalToConstant: 40),
-				button.widthAnchor.constraint(equalToConstant: 40)
+				button.topAnchor.constraint(equalTo: self.topAnchor, constant: 5),
+				button.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: -5),
+				button.heightAnchor.constraint(equalToConstant: 50),
+				button.widthAnchor.constraint(equalToConstant: 50)
 			]
 		}
 		
