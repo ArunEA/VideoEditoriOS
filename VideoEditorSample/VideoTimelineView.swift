@@ -164,7 +164,7 @@ class VideoTimelineView: UIView {
 		scrollView.addSubview(contentView)
 		scrollView.addSubview(lineView)
 		
-		lineViewLeading = lineView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor)
+		lineViewLeading = lineView.centerXAnchor.constraint(equalTo: scrollView.leadingAnchor)
 		
 		let constraints = [
 			scrollView.leadingAnchor.constraint(equalTo: self.leadingAnchor),
@@ -179,7 +179,6 @@ class VideoTimelineView: UIView {
 			contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
 			
 			lineViewLeading,
-			lineView.widthAnchor.constraint(equalToConstant: 7),
 			lineView.topAnchor.constraint(equalTo: scrollView.topAnchor),
 			lineView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor)
 		]

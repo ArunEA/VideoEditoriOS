@@ -21,6 +21,29 @@ class LineView: UIView {
 	}
 	
 	private func commonInit() {
-		backgroundColor = .red
+		backgroundColor = .clear
+		setConstraints()
+	}
+	
+	private lazy var actualLineView: UIView = {
+		let view = UIView()
+		view.translatesAutoresizingMaskIntoConstraints = false
+		view.backgroundColor = .red
+		
+		return view
+	}()
+	
+	private func setConstraints() {
+		addSubview(actualLineView)
+		
+		let constraints = [
+			actualLineView.leadingAnchor.constraint(equalTo: self.leadingAnchor, constant: 5),
+			actualLineView.trailingAnchor.constraint(equalTo: self.trailingAnchor, constant: -5),
+			actualLineView.topAnchor.constraint(equalTo: self.topAnchor),
+			actualLineView.bottomAnchor.constraint(equalTo: self.bottomAnchor),
+			actualLineView.widthAnchor.constraint(equalToConstant: CGFloat(Constants.lineViewWidth))
+		]
+		
+		NSLayoutConstraint.activate(constraints)
 	}
 }
