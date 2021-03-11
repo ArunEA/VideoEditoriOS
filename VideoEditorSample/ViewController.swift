@@ -28,6 +28,14 @@ class ViewController: UIViewController {
 	private var player: AVPlayer?
 	private var currentAsset: AVAsset?
 
+	private lazy var playbackControls: PlaybackControl = {
+		let control = PlaybackControl()
+		control.translatesAutoresizingMaskIntoConstraints = false
+		control.delegate = self
+		
+		return control
+	}()
+	
 	private lazy var timelineView: VideoTimelineView = {
 		let view = VideoTimelineView(frame: .zero)
 		view.translatesAutoresizingMaskIntoConstraints = false
@@ -65,6 +73,7 @@ class ViewController: UIViewController {
 		self.navigationItem.rightBarButtonItem = mergeButton
 		
 		view.addSubview(videoContainerView)
+		view.addSubview(playbackControls)
 		view.addSubview(timelineView)
 		
 		let margin = view.safeAreaLayoutGuide
@@ -72,6 +81,9 @@ class ViewController: UIViewController {
 			videoContainerView.leadingAnchor.constraint(equalTo: margin.leadingAnchor),
 			videoContainerView.trailingAnchor.constraint(equalTo: margin.trailingAnchor),
 			videoContainerView.topAnchor.constraint(equalTo: margin.topAnchor),
+			
+			playbackControls.bottomAnchor.constraint(equalTo: timelineView.topAnchor, constant: 10),
+			playbackControls.centerXAnchor.constraint(equalTo: view.centerXAnchor),
 			
 			timelineView.topAnchor.constraint(equalTo: videoContainerView.bottomAnchor),
 			timelineView.leadingAnchor.constraint(equalTo: margin.leadingAnchor),
@@ -95,22 +107,22 @@ class ViewController: UIViewController {
 		
 		self.videoContainerView.layer.addSublayer(playerLayer)
 		
-//		self.player?.addPeriodicTimeObserver(forInterval: CMTime(seconds: 1, preferredTimescale: 2), queue: DispatchQueue.main) {[weak self] (progressTime) in
-//			if let duration = self?.player?.currentItem?.duration {
-//
-//				let durationSeconds = CMTimeGetSeconds(duration)
-//				let seconds = CMTimeGetSeconds(progressTime)
-//				let progress = Float(seconds/durationSeconds)
-//
-//				DispatchQueue.main.async {
-//					if progress >= 1.0 || progress.isNaN {
-//						self?.timelineView.updateProgress(0)
-//					} else {
-//						self?.timelineView.updateProgress(progress)
-//					}
-//				}
-//			}
-//		}
+		self.player?.addPeriodicTimeObserver(forInterval: CMTime(seconds: 1, preferredTimescale: 2), queue: DispatchQueue.main) {[weak self] (progressTime) in
+			if let duration = self?.player?.currentItem?.duration {
+
+				let durationSeconds = CMTimeGetSeconds(duration)
+				let seconds = CMTimeGetSeconds(progressTime)
+				let progress = Float(seconds/durationSeconds)
+
+				DispatchQueue.main.async {
+					if progress >= 1.0 || progress.isNaN {
+						self?.timelineView.updateProgress(0)
+					} else {
+						self?.timelineView.updateProgress(progress)
+					}
+				}
+			}
+		}
 	}
 	
 	private func processAsset(_ asset: AVAsset) {
@@ -257,5 +269,23 @@ extension ViewController: UINavigationControllerDelegate, UIImagePickerControlle
 							handler: nil))
 		
 		present(alert, animated: true, completion: nil)
+	}
+}
+
+extension ViewController: PlaybackControlDelegate {
+	func play() {
+		playVideo()
+	}
+	
+	func pause() {
+		pauseVideo()
+	}
+	
+	func forward() {
+		forwardVideo(by: 5)
+	}
+	
+	func reverse() {
+		rewindVideo(by: 5)
 	}
 }

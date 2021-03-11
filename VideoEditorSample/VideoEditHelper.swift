@@ -49,17 +49,19 @@ struct VideoEditor {
 			start: .zero,
 			duration: CMTimeAdd(firstAsset.duration, secondAsset.duration))
 		
+		let finalRenderSize = getRenderSize(firstAsset, secondAsset, videoContainer)
+		
 		// 4 - Set up the instructions — one for each asset
-		let firstInstruction = VideoEditor.videoCompositionInstruction( firstTrack, asset: firstAsset, videoContainer: videoContainer)
+		let firstInstruction = VideoEditor.videoCompositionInstruction( firstTrack, asset: firstAsset, renderSize: finalRenderSize)
 		firstInstruction.setOpacity(0.0, at: firstAsset.duration)
-		let secondInstruction = VideoEditor.videoCompositionInstruction( secondTrack, asset: secondAsset, videoContainer: videoContainer)
+		let secondInstruction = VideoEditor.videoCompositionInstruction( secondTrack, asset: secondAsset, renderSize: finalRenderSize)
 		
 		// 5 - Add all instructions together and create a mutable video composition
 		mainInstruction.layerInstructions = [firstInstruction, secondInstruction]
 		let mainComposition = AVMutableVideoComposition()
 		mainComposition.instructions = [mainInstruction]
 		mainComposition.frameDuration = CMTimeMake(value: 1, timescale: 30)
-		mainComposition.renderSize = getRenderSize(firstAsset, secondAsset, videoContainer)
+		mainComposition.renderSize = finalRenderSize
 		
 		// 6 - Audio track
 		if let loadedAudioAsset = audioAsset {
@@ -112,16 +114,16 @@ struct VideoEditor {
 		}
 	}
 	
-	static func videoCompositionInstruction(_ track: AVCompositionTrack, asset: AVAsset, videoContainer: UIView ) -> AVMutableVideoCompositionLayerInstruction {
+	static func videoCompositionInstruction(_ track: AVCompositionTrack, asset: AVAsset, renderSize: CGSize) -> AVMutableVideoCompositionLayerInstruction {
 		let instruction = AVMutableVideoCompositionLayerInstruction(assetTrack: track)
 		let assetTrack = asset.tracks(withMediaType: AVMediaType.video)[0]
 		
 		let transform = assetTrack.preferredTransform
 		let assetInfo = orientationFromTransform(transform)
 		
-		var scaleToFitRatio = videoContainer.frame.size.width / assetTrack.naturalSize.width
+		var scaleToFitRatio = renderSize.width / assetTrack.naturalSize.width
 		if assetInfo.isPortrait {
-			scaleToFitRatio = videoContainer.frame.size.width / assetTrack.naturalSize.height
+			scaleToFitRatio = renderSize.width / assetTrack.naturalSize.height
 			let scaleFactor = CGAffineTransform(
 				scaleX: scaleToFitRatio,
 				y: scaleToFitRatio)
@@ -134,10 +136,11 @@ struct VideoEditor {
 				y: scaleToFitRatio)
 			var concat = assetTrack.preferredTransform.concatenating(scaleFactor)
 			
+			// TODO: Add another transform to center the video
+			
 			if assetInfo.orientation == .down {
 				let fixUpsideDown = CGAffineTransform(rotationAngle: CGFloat(Double.pi))
-				let windowBounds = videoContainer.frame.size
-				let yFix = assetTrack.naturalSize.height + windowBounds.height
+				let yFix = assetTrack.naturalSize.height + renderSize.height
 				let centerFix = CGAffineTransform(
 					translationX: assetTrack.naturalSize.width,
 					y: yFix)

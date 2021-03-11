@@ -26,6 +26,7 @@
 		8D020E6525F8DD550037FBD4 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D020E6425F8DD550037FBD4 /* Constants.swift */; };
 		8D020E6925F9D4D50037FBD4 /* VideoPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D020E6825F9D4D50037FBD4 /* VideoPicker.swift */; };
 		8D020E7125F9FD650037FBD4 /* ActivitySpinner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D020E7025F9FD650037FBD4 /* ActivitySpinner.swift */; };
+		8D020E7625FA24240037FBD4 /* PlaybackControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D020E7525FA24240037FBD4 /* PlaybackControl.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -50,6 +51,7 @@
 		8D020E6425F8DD550037FBD4 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		8D020E6825F9D4D50037FBD4 /* VideoPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPicker.swift; sourceTree = "<group>"; };
 		8D020E7025F9FD650037FBD4 /* ActivitySpinner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivitySpinner.swift; sourceTree = "<group>"; };
+		8D020E7525FA24240037FBD4 /* PlaybackControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackControl.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -102,6 +104,7 @@
 				8D020E6425F8DD550037FBD4 /* Constants.swift */,
 				8D020E6825F9D4D50037FBD4 /* VideoPicker.swift */,
 				8D020E7025F9FD650037FBD4 /* ActivitySpinner.swift */,
+				8D020E7525FA24240037FBD4 /* PlaybackControl.swift */,
 			);
 			path = VideoEditorSample;
 			sourceTree = "<group>";
@@ -185,6 +188,7 @@
 				8D020E7125F9FD650037FBD4 /* ActivitySpinner.swift in Sources */,
 				8D020E0825F5EC200037FBD4 /* SceneDelegate.swift in Sources */,
 				8D020E2925F600C60037FBD4 /* ThumblineGenerator.swift in Sources */,
+				8D020E7625FA24240037FBD4 /* PlaybackControl.swift in Sources */,
 				8D020E5825F78CA80037FBD4 /* VideoEditHelper.swift in Sources */,
 				8D020E5B25F7920E0037FBD4 /* VideoAsset.swift in Sources */,
 				8D020E4A25F7319E0037FBD4 /* TrimTimelineView.swift in Sources */,
