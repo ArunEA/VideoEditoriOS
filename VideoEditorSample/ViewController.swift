@@ -18,6 +18,7 @@ class ViewController: UIViewController {
 	
 	private lazy var videoContainerView: UIView = {
 		let view = UIView()
+		view.backgroundColor = .black
 		view.translatesAutoresizingMaskIntoConstraints = false
 		
 		return view
@@ -36,7 +37,7 @@ class ViewController: UIViewController {
 	}()
 	
 	private lazy var mergeButton: UIBarButtonItem = {
-		let button = UIBarButtonItem(title: "Export", style: .done, target: self, action: #selector(merge))
+		let button = UIBarButtonItem(title: "Export", style: .done, target: self, action: #selector(export))
 		
 		return button
 	}()
@@ -54,11 +55,11 @@ class ViewController: UIViewController {
 	override func viewDidLoad() {
 		super.viewDidLoad()
 		
-		let asset1 = AVAsset(url: URL(fileURLWithPath: Bundle.main.path(forResource: "sample-mp4-file", ofType:"mp4")!))
-		let asset2 = AVAsset(url: URL(fileURLWithPath: Bundle.main.path(forResource: "file_example_MP4_640_3MG", ofType:"mp4")!))
+		//let asset1 = AVAsset(url: URL(fileURLWithPath: Bundle.main.path(forResource: "sample-mp4-file", ofType:"mp4")!))
+		//let asset2 = AVAsset(url: URL(fileURLWithPath: Bundle.main.path(forResource: "file_example_MP4_640_3MG", ofType:"mp4")!))
 		
-		processAsset(asset1)
-		processAsset(asset2)
+		//processAsset(asset1)
+		//processAsset(asset2)
 		
 		self.navigationItem.leftBarButtonItem = addButton
 		self.navigationItem.rightBarButtonItem = mergeButton
@@ -83,12 +84,14 @@ class ViewController: UIViewController {
 	}
 	
 	func setupPlayer(_ asset: AVAsset) {
+		if playerLayer == nil {
+			playerLayer = AVPlayerLayer()
+			playerLayer.frame = self.videoContainerView.bounds
+			playerLayer.videoGravity = .resizeAspect
+		}
 		let playerItem = AVPlayerItem(asset: asset)
 		self.player = AVPlayer(playerItem: playerItem)
-		
-		playerLayer = AVPlayerLayer(player: player)
-		playerLayer.frame = self.videoContainerView.bounds
-		playerLayer.videoGravity = .resizeAspect
+		self.playerLayer.player = player
 		
 		self.videoContainerView.layer.addSublayer(playerLayer)
 		
@@ -114,9 +117,14 @@ class ViewController: UIViewController {
 		timelineView.addAsset(asset)
 		
 		if let currentAsset = self.currentAsset {
-			VideoEditor.merge(firstAsset: currentAsset, secondAsset: asset, audioAsset: nil, controller: self) { (mergedAsset) in
+			
+			ActivitySpinner.shared.show(on: self.view)
+			
+			VideoEditor.merge(firstAsset: currentAsset, secondAsset: asset, audioAsset: nil, videoContainer: videoContainerView) { (mergedAsset) in
 				self.currentAsset = mergedAsset
 				self.setupPlayer(mergedAsset)
+				
+				ActivitySpinner.shared.hide()
 			}
 		} else {
 			self.currentAsset = asset
@@ -145,8 +153,27 @@ class ViewController: UIViewController {
 		}
 	}
 	
-	@objc func merge() {
+	@objc func export() {
+		guard let currentAsset = self.currentAsset else { return }
 		
+		ActivitySpinner.shared.show(on: self.view)
+		
+		VideoEditor.exportVideo(currentAsset) { (error) in
+			let success = error == nil
+			let message = success ? "Video saved" : "Failed to save video"
+			
+			ActivitySpinner.shared.hide()
+			
+			let alert = UIAlertController(
+				title: "Export Video",
+				message: message,
+				preferredStyle: .alert)
+			alert.addAction(UIAlertAction(
+								title: "OK",
+								style: UIAlertAction.Style.cancel,
+								handler: nil))
+			self.present(alert, animated: true, completion: nil)
+		}
 	}
 	
 	@objc func trim() {

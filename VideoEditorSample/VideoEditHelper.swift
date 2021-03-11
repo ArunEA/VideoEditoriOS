@@ -10,7 +10,7 @@ import UIKit
 import Photos
 
 struct VideoEditor {
-	static func merge(firstAsset: AVAsset?, secondAsset: AVAsset?, audioAsset: AVAsset?, controller: UIViewController, completion: @escaping (AVAsset)->Void) {
+	static func merge(firstAsset: AVAsset?, secondAsset: AVAsset?, audioAsset: AVAsset?, videoContainer: UIView, completion: @escaping (AVAsset)->Void) {
 		guard let firstAsset = firstAsset, let secondAsset = secondAsset else { return }
 		
 		let mixComposition = AVMutableComposition()
@@ -50,20 +50,16 @@ struct VideoEditor {
 			duration: CMTimeAdd(firstAsset.duration, secondAsset.duration))
 		
 		// 4 - Set up the instructions — one for each asset
-		let firstInstruction = VideoEditor.videoCompositionInstruction(
-			firstTrack,
-			asset: firstAsset)
+		let firstInstruction = VideoEditor.videoCompositionInstruction( firstTrack, asset: firstAsset, videoContainer: videoContainer)
 		firstInstruction.setOpacity(0.0, at: firstAsset.duration)
-		let secondInstruction = VideoEditor.videoCompositionInstruction(
-			secondTrack,
-			asset: secondAsset)
+		let secondInstruction = VideoEditor.videoCompositionInstruction( secondTrack, asset: secondAsset, videoContainer: videoContainer)
 		
 		// 5 - Add all instructions together and create a mutable video composition
 		mainInstruction.layerInstructions = [firstInstruction, secondInstruction]
 		let mainComposition = AVMutableVideoComposition()
 		mainComposition.instructions = [mainInstruction]
 		mainComposition.frameDuration = CMTimeMake(value: 1, timescale: 30)
-		mainComposition.renderSize = UIScreen.main.bounds.size
+		mainComposition.renderSize = getRenderSize(firstAsset, secondAsset, videoContainer)
 		
 		// 6 - Audio track
 		if let loadedAudioAsset = audioAsset {
@@ -111,31 +107,21 @@ struct VideoEditor {
 			DispatchQueue.main.async {
 				if let outputURL = exporter.outputURL {
 					completion(AVAsset(url: outputURL))
-					exportDidFinish(exporter, controller: controller)
 				}
 			}
 		}
 	}
 	
-	static func getMaxSize(_ asset1: AVAsset, _ asset2: AVAsset) -> CGSize {
-		let assetTrack1 = asset1.tracks(withMediaType: AVMediaType.video)[0]
-		let assetTrack2 = asset2.tracks(withMediaType: AVMediaType.video)[0]
-		return CGSize(width: max(assetTrack1.naturalSize.width, assetTrack2.naturalSize.width), height: max(assetTrack1.naturalSize.height, assetTrack2.naturalSize.height))
-	}
-	
-	static func videoCompositionInstruction(
-		_ track: AVCompositionTrack,
-		asset: AVAsset
-	) -> AVMutableVideoCompositionLayerInstruction {
+	static func videoCompositionInstruction(_ track: AVCompositionTrack, asset: AVAsset, videoContainer: UIView ) -> AVMutableVideoCompositionLayerInstruction {
 		let instruction = AVMutableVideoCompositionLayerInstruction(assetTrack: track)
 		let assetTrack = asset.tracks(withMediaType: AVMediaType.video)[0]
 		
 		let transform = assetTrack.preferredTransform
 		let assetInfo = orientationFromTransform(transform)
 		
-		var scaleToFitRatio = UIScreen.main.bounds.width / assetTrack.naturalSize.width
+		var scaleToFitRatio = videoContainer.frame.size.width / assetTrack.naturalSize.width
 		if assetInfo.isPortrait {
-			scaleToFitRatio = UIScreen.main.bounds.width / assetTrack.naturalSize.height
+			scaleToFitRatio = videoContainer.frame.size.width / assetTrack.naturalSize.height
 			let scaleFactor = CGAffineTransform(
 				scaleX: scaleToFitRatio,
 				y: scaleToFitRatio)
@@ -147,12 +133,10 @@ struct VideoEditor {
 				scaleX: scaleToFitRatio,
 				y: scaleToFitRatio)
 			var concat = assetTrack.preferredTransform.concatenating(scaleFactor)
-				.concatenating(CGAffineTransform(
-								translationX: 0,
-								y: UIScreen.main.bounds.width / 2))
+			
 			if assetInfo.orientation == .down {
 				let fixUpsideDown = CGAffineTransform(rotationAngle: CGFloat(Double.pi))
-				let windowBounds = UIScreen.main.bounds
+				let windowBounds = videoContainer.frame.size
 				let yFix = assetTrack.naturalSize.height + windowBounds.height
 				let centerFix = CGAffineTransform(
 					translationX: assetTrack.naturalSize.width,
@@ -163,6 +147,16 @@ struct VideoEditor {
 		}
 		
 		return instruction
+	}
+	
+	static func getRenderSize(_ asset1: AVAsset, _ asset2: AVAsset, _ container: UIView) -> CGSize {
+		let assetTrack1 = asset1.tracks(withMediaType: AVMediaType.video)[0]
+		let assetTrack2 = asset2.tracks(withMediaType: AVMediaType.video)[0]
+		let maxWidth = max(assetTrack1.naturalSize.width, assetTrack2.naturalSize.width)
+		let maxHeight = max(assetTrack1.naturalSize.height, assetTrack2.naturalSize.height)
+		let scaleToFitRatio = container.frame.size.width / maxWidth
+		
+		return CGSize(width: scaleToFitRatio*maxWidth, height: scaleToFitRatio*maxHeight)
 	}
 	
 	static func orientationFromTransform(
@@ -189,11 +183,14 @@ struct VideoEditor {
 		return (assetOrientation, isPortrait)
 	}
 	
-	static func exportDidFinish(_ session: AVAssetExportSession, controller: UIViewController) {
+	static func exportDidFinish(_ session: AVAssetExportSession, completion: ((Error?)->Void)?) {
 		guard
 			session.status == AVAssetExportSession.Status.completed,
 			let outputURL = session.outputURL
-		else { return }
+		else {
+			completion?(VideoExportError.setupError)
+			return
+		}
 		
 		let saveVideoToPhotos = {
 			let changes: () -> Void = {
@@ -201,19 +198,7 @@ struct VideoEditor {
 			}
 			PHPhotoLibrary.shared().performChanges(changes) { saved, error in
 				DispatchQueue.main.async {
-					let success = saved && (error == nil)
-					let title = success ? "Success" : "Error"
-					let message = success ? "Video saved" : "Failed to save video"
-					
-					let alert = UIAlertController(
-						title: title,
-						message: message,
-						preferredStyle: .alert)
-					alert.addAction(UIAlertAction(
-										title: "OK",
-										style: UIAlertAction.Style.cancel,
-										handler: nil))
-					controller.present(alert, animated: true, completion: nil)
+					completion?(error)
 				}
 			}
 		}
@@ -223,12 +208,49 @@ struct VideoEditor {
 			PHPhotoLibrary.requestAuthorization { status in
 				if status == .authorized {
 					saveVideoToPhotos()
+				} else {
+					completion?(VideoExportError.setupError)
 				}
 			}
 		} else {
 			saveVideoToPhotos()
 		}
 	}
+	
+	static func exportVideo(_ asset: AVAsset, _ completion: ((Error?) -> Void)?) {
+		guard let exporter = AVAssetExportSession(
+				asset: asset,
+				presetName: AVAssetExportPresetHighestQuality)
+		else {
+			completion?(VideoExportError.setupError)
+			return
+		}
+		
+		let dateFormatter = DateFormatter()
+		dateFormatter.dateStyle = .long
+		dateFormatter.timeStyle = .short
+		let outputURL = getDocumentsDirectory().appendingPathComponent("mergeVideo-\(dateFormatter.string(from: Date())).mov")
+		exporter.outputURL = outputURL
+		exporter.outputFileType = AVFileType.mov
+		exporter.shouldOptimizeForNetworkUse = true
+		
+		if FileManager.default.fileExists(atPath: outputURL.path) {
+			do {
+				try FileManager.default.removeItem(at: outputURL)
+			} catch { print(error.localizedDescription) }
+		}
+		
+		// 9 - Perform the Export
+		exporter.exportAsynchronously {
+			DispatchQueue.main.async {
+				self.exportDidFinish(exporter, completion: completion)
+			}
+		}
+	}
+}
+
+enum VideoExportError: Error {
+	case setupError
 }
 
 extension AVAsset {

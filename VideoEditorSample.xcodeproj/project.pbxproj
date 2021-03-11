@@ -25,6 +25,7 @@
 		8D020E6225F8CE2A0037FBD4 /* UIKitExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D020E6125F8CE2A0037FBD4 /* UIKitExtensions.swift */; };
 		8D020E6525F8DD550037FBD4 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D020E6425F8DD550037FBD4 /* Constants.swift */; };
 		8D020E6925F9D4D50037FBD4 /* VideoPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D020E6825F9D4D50037FBD4 /* VideoPicker.swift */; };
+		8D020E7125F9FD650037FBD4 /* ActivitySpinner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D020E7025F9FD650037FBD4 /* ActivitySpinner.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -48,6 +49,7 @@
 		8D020E6125F8CE2A0037FBD4 /* UIKitExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIKitExtensions.swift; sourceTree = "<group>"; };
 		8D020E6425F8DD550037FBD4 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		8D020E6825F9D4D50037FBD4 /* VideoPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPicker.swift; sourceTree = "<group>"; };
+		8D020E7025F9FD650037FBD4 /* ActivitySpinner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivitySpinner.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -99,6 +101,7 @@
 				8D020E6125F8CE2A0037FBD4 /* UIKitExtensions.swift */,
 				8D020E6425F8DD550037FBD4 /* Constants.swift */,
 				8D020E6825F9D4D50037FBD4 /* VideoPicker.swift */,
+				8D020E7025F9FD650037FBD4 /* ActivitySpinner.swift */,
 			);
 			path = VideoEditorSample;
 			sourceTree = "<group>";
@@ -179,6 +182,7 @@
 				8D020E0A25F5EC200037FBD4 /* ViewController.swift in Sources */,
 				8D020E5025F766320037FBD4 /* VideoTimelineView.swift in Sources */,
 				8D020E0625F5EC200037FBD4 /* AppDelegate.swift in Sources */,
+				8D020E7125F9FD650037FBD4 /* ActivitySpinner.swift in Sources */,
 				8D020E0825F5EC200037FBD4 /* SceneDelegate.swift in Sources */,
 				8D020E2925F600C60037FBD4 /* ThumblineGenerator.swift in Sources */,
 				8D020E5825F78CA80037FBD4 /* VideoEditHelper.swift in Sources */,
