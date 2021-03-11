@@ -154,7 +154,9 @@ struct VideoEditor {
 		let assetTrack2 = asset2.tracks(withMediaType: AVMediaType.video)[0]
 		let maxWidth = max(assetTrack1.naturalSize.width, assetTrack2.naturalSize.width)
 		let maxHeight = max(assetTrack1.naturalSize.height, assetTrack2.naturalSize.height)
-		let scaleToFitRatio = container.frame.size.width / maxWidth
+		let transform = assetTrack1.preferredTransform
+		let assetInfo = orientationFromTransform(transform)
+		let scaleToFitRatio = assetInfo.isPortrait ? container.frame.size.height/maxHeight : container.frame.size.width/maxWidth
 		
 		return CGSize(width: scaleToFitRatio*maxWidth, height: scaleToFitRatio*maxHeight)
 	}
