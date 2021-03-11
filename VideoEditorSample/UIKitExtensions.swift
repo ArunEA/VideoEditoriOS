@@ -5,24 +5,35 @@
 //  Created by KnilaDev on 10/03/21.
 //
 
-import UIKit
+import UIKit.UIPanGestureRecognizer
 
-extension UIView {
-	public func removeAllConstraints() {
-		var _superview = self.superview
+enum PanDirection {
+	case vertical
+	case horizontal
+}
+
+class PanDirectionGestureRecognizer: UIPanGestureRecognizer {
+	
+	let direction: PanDirection
+	
+	init(direction: PanDirection, target: AnyObject, action: Selector) {
+		self.direction = direction
+		super.init(target: target, action: action)
+	}
+	
+	override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent) {
+		super.touchesMoved(touches, with: event)
 		
-		while let superview = _superview {
-			for constraint in superview.constraints {
-				if let first = constraint.firstItem as? UIView, first == self {
-					superview.removeConstraint(constraint)
-				}
-				if let second = constraint.secondItem as? UIView, second == self {
-					superview.removeConstraint(constraint)
-				}
+		if state == .began {
+			let vel = velocity(in: view)
+			switch direction {
+			case .horizontal where abs(vel.y) > abs(vel.x):
+				state = .cancelled
+			case .vertical where abs(vel.x) > abs(vel.y):
+				state = .cancelled
+			default:
+				break
 			}
-			_superview = superview.superview
 		}
-		
-		self.removeConstraints(self.constraints)
 	}
 }

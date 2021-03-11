@@ -8,6 +8,11 @@
 import UIKit
 import AVFoundation
 
+protocol ControllerTrimViewDelegate: class {
+	func trimStateChanged(isTrimming: Bool)
+	func seekTo(position: Double)
+}
+
 class ViewController: UIViewController {
 	
 	private lazy var videoContainerView: UIView = {
@@ -105,7 +110,6 @@ class ViewController: UIViewController {
 			}
 		}
 		
-		self.player?.play()
 	}
 	
 	@objc func merge() {
@@ -127,14 +131,39 @@ class ViewController: UIViewController {
 	public func pauseVideo() {
 		player?.pause()
 	}
-}
-
-extension ViewController: TrimViewDelegate {
-	func trimViewAdjusted(asset: VideoAsset?) {
-		
+	
+	func rewindVideo(by seconds: Float64) {
+		if let currentTime = player?.currentTime() {
+			var newTime = CMTimeGetSeconds(currentTime) - seconds
+			if newTime <= 0 {
+				newTime = 0
+			}
+			player?.seek(to: CMTime(value: CMTimeValue(newTime * 1000), timescale: 1000))
+		}
 	}
 	
-	func trimStateChanged(isTrimming: Bool, cell: TrimTimelineView) {
+	func forwardVideo(by seconds: Float64) {
+		if let currentTime = player?.currentTime(), let duration = player?.currentItem?.duration {
+			var newTime = CMTimeGetSeconds(currentTime) + seconds
+			if newTime >= CMTimeGetSeconds(duration) {
+				newTime = CMTimeGetSeconds(duration)
+			}
+			player?.seek(to: CMTime(value: CMTimeValue(newTime * 1000), timescale: 1000))
+		}
+	}
+}
+
+extension ViewController: ControllerTrimViewDelegate {
+	func seekTo(position: Double) {
+		if let totalDuration = player?.currentItem?.duration {
+			let seekTime = CMTimeGetSeconds(totalDuration) * position
+			let seekCmTime = CMTimeMake(value: CMTimeValue(seekTime * 1000), timescale: 1000)
+			
+			player?.seek(to: seekCmTime)
+		}
+	}
+	
+	func trimStateChanged(isTrimming: Bool) {
 		if isTrimming {
 			self.navigationItem.rightBarButtonItem = trimButton
 			self.navigationItem.leftBarButtonItem = cancelButton

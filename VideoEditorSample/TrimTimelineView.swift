@@ -13,6 +13,10 @@ protocol TrimViewDelegate: class {
 	func trimStateChanged(isTrimming: Bool, cell: TrimTimelineView)
 }
 
+extension TrimViewDelegate {
+	func moveSeekerTo(position: CGFloat, for asset: VideoAsset) {}
+}
+
 class TrimTimelineView: UIView {
 	weak var delegate: TrimViewDelegate?
 	var isTrimming: Bool = false {
@@ -88,8 +92,8 @@ class TrimTimelineView: UIView {
 	@objc func leftEarPanned(panGesture: UIPanGestureRecognizer) {
 		guard let videoAsset = self.videoAsset else { return }
 		
-		let translation = panGesture.translation(in: self.self)
-		panGesture.setTranslation(.zero, in: self.self)
+		let translation = panGesture.translation(in: self)
+		panGesture.setTranslation(.zero, in: self)
 		
 		let amountToAdjust = leftEarLeading.constant + translation.x
 		if amountToAdjust > 0 {
@@ -109,8 +113,8 @@ class TrimTimelineView: UIView {
 	@objc func rightEarPanned(panGesture: UIPanGestureRecognizer) {
 		guard let videoAsset = self.videoAsset else { return }
 		
-		let translation = panGesture.translation(in: self.self)
-		panGesture.setTranslation(.zero, in: self.self)
+		let translation = panGesture.translation(in: self)
+		panGesture.setTranslation(.zero, in: self)
 		
 		let amountToAdjust = rightEarTrailing.constant + translation.x
 		if amountToAdjust <= 0 {

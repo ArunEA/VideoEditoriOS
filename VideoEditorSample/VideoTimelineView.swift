@@ -13,7 +13,7 @@ class VideoTimelineView: UIView {
 	private var currentTrimView: TrimTimelineView?
 	private var allTimelineConstraints = [NSLayoutConstraint]()
 	
-	weak var delegate: TrimViewDelegate?
+	weak var delegate: ControllerTrimViewDelegate?
 	
 	var assets = [VideoAsset]()
 	
@@ -66,6 +66,45 @@ class VideoTimelineView: UIView {
 	
 	func commonInit() {
 		setConstraints()
+		setGestures()
+	}
+	
+	private func setGestures() {
+		let seekPan = UIPanGestureRecognizer(target: self, action: #selector(seekerPanned(panGesture:)))
+		lineView.addGestureRecognizer(seekPan)
+	}
+	
+	@objc func seekerPanned(panGesture: UIPanGestureRecognizer) {
+		let translation = panGesture.translation(in: self)
+		panGesture.setTranslation(.zero, in: self)
+		
+		if panGesture.state != .cancelled {
+			moveSeekerTo(position: translation.x * 0.8)
+		}
+	}
+	
+	func moveSeekerTo(position: CGFloat) {
+		let maxWidth = self.scrollView.contentSize.width
+		if lineViewLeading.constant + position < 0 {
+			lineViewLeading.constant = 0
+		} else if (lineViewLeading.constant + position) > maxWidth {
+			lineViewLeading.constant = maxWidth
+		} else {
+			lineViewLeading.constant = lineViewLeading.constant + position
+		}
+		
+		print(position, lineViewLeading.constant)
+		
+		let position = Double(lineViewLeading.constant / maxWidth)
+		delegate?.seekTo(position: position)
+	}
+	
+	private func asset(for position: CGFloat) -> VideoAsset? {
+		if let subView = self.hitTest(CGPoint(x: position, y: 10), with: nil) as? TrimTimelineView {
+			return subView.videoAsset
+		}
+		
+		return nil
 	}
 	
 	func reloadTimeline() {
@@ -139,7 +178,7 @@ class VideoTimelineView: UIView {
 			contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
 			
 			lineViewLeading,
-			lineView.widthAnchor.constraint(equalToConstant: 2),
+			lineView.widthAnchor.constraint(equalToConstant: 7),
 			lineView.topAnchor.constraint(equalTo: scrollView.topAnchor),
 			lineView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor)
 		]
@@ -154,7 +193,7 @@ extension VideoTimelineView: TrimViewDelegate {
 	}
 	
 	func trimStateChanged(isTrimming: Bool, cell: TrimTimelineView) {
-		delegate?.trimStateChanged(isTrimming: isTrimming, cell: cell)
+		delegate?.trimStateChanged(isTrimming: isTrimming)
 		currentTrimView = isTrimming ? cell : nil
 		
 		reloadTimeline()
