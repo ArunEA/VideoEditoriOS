@@ -32,13 +32,14 @@ class VideoTimelineView: UIView {
 	private lazy var scrollView: UIScrollView = {
 		let scrollView = UIScrollView()
 		scrollView.translatesAutoresizingMaskIntoConstraints = false
+		scrollView.backgroundColor = .darkGray
 		
 		return scrollView
 	}()
 	
 	private lazy var contentView: UIView = {
 		let view = UIView()
-		view.backgroundColor = .black
+		view.backgroundColor = .darkGray
 		view.translatesAutoresizingMaskIntoConstraints = false
 		
 		return view
@@ -213,8 +214,6 @@ extension VideoTimelineView {
 	}
 	
 	func updateProgress(_ progress: Float) {
-		if let timelineWidth = self.assets.first?.widthForCell(isTrimming: false) {
-			lineViewLeading.constant = timelineWidth.width * CGFloat(progress)
-		}
+		lineViewLeading.constant = self.scrollView.contentSize.width * CGFloat(progress)
 	}
 }
