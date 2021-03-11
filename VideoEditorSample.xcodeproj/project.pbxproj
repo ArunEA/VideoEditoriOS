@@ -24,6 +24,7 @@
 		8D020E5E25F8964E0037FBD4 /* LineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D020E5D25F8964E0037FBD4 /* LineView.swift */; };
 		8D020E6225F8CE2A0037FBD4 /* UIKitExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D020E6125F8CE2A0037FBD4 /* UIKitExtensions.swift */; };
 		8D020E6525F8DD550037FBD4 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D020E6425F8DD550037FBD4 /* Constants.swift */; };
+		8D020E6925F9D4D50037FBD4 /* VideoPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D020E6825F9D4D50037FBD4 /* VideoPicker.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -46,6 +47,7 @@
 		8D020E5D25F8964E0037FBD4 /* LineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LineView.swift; sourceTree = "<group>"; };
 		8D020E6125F8CE2A0037FBD4 /* UIKitExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIKitExtensions.swift; sourceTree = "<group>"; };
 		8D020E6425F8DD550037FBD4 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
+		8D020E6825F9D4D50037FBD4 /* VideoPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPicker.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -96,6 +98,7 @@
 				8D020E5D25F8964E0037FBD4 /* LineView.swift */,
 				8D020E6125F8CE2A0037FBD4 /* UIKitExtensions.swift */,
 				8D020E6425F8DD550037FBD4 /* Constants.swift */,
+				8D020E6825F9D4D50037FBD4 /* VideoPicker.swift */,
 			);
 			path = VideoEditorSample;
 			sourceTree = "<group>";
@@ -172,6 +175,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8D020E6925F9D4D50037FBD4 /* VideoPicker.swift in Sources */,
 				8D020E0A25F5EC200037FBD4 /* ViewController.swift in Sources */,
 				8D020E5025F766320037FBD4 /* VideoTimelineView.swift in Sources */,
 				8D020E0625F5EC200037FBD4 /* AppDelegate.swift in Sources */,
