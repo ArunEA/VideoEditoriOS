@@ -15,7 +15,8 @@ class VideoTimelineView: UIView {
 	
 	weak var delegate: ControllerTrimViewDelegate?
 	
-	var assets = [VideoAsset]()
+	var videoAssets = [VideoAsset]()
+	var audioAssets = [VideoAsset]()
 	
 	override init(frame: CGRect) {
 		super.init(frame: .zero)
@@ -29,7 +30,16 @@ class VideoTimelineView: UIView {
 		commonInit()
 	}
 	
-	private lazy var scrollView: UIScrollView = {
+	private lazy var videoScrollView: UIScrollView = {
+		let scrollView = UIScrollView()
+		scrollView.translatesAutoresizingMaskIntoConstraints = false
+		scrollView.backgroundColor = .darkGray
+		scrollView.clipsToBounds = false
+		
+		return scrollView
+	}()
+	
+	private lazy var audioScrollView: UIScrollView = {
 		let scrollView = UIScrollView()
 		scrollView.translatesAutoresizingMaskIntoConstraints = false
 		scrollView.backgroundColor = .darkGray
@@ -37,7 +47,15 @@ class VideoTimelineView: UIView {
 		return scrollView
 	}()
 	
-	private lazy var contentView: UIView = {
+	private lazy var videoContentView: UIView = {
+		let view = UIView()
+		view.backgroundColor = .darkGray
+		view.translatesAutoresizingMaskIntoConstraints = false
+		
+		return view
+	}()
+	
+	private lazy var audioContentView: UIView = {
 		let view = UIView()
 		view.backgroundColor = .darkGray
 		view.translatesAutoresizingMaskIntoConstraints = false
@@ -52,17 +70,31 @@ class VideoTimelineView: UIView {
 		return view
 	}()
 	
+	private lazy var borderView: UIView = {
+		let view = UIView()
+		view.translatesAutoresizingMaskIntoConstraints = false
+		view.backgroundColor = .white
+		
+		return view
+	}()
+	
 	private var lineViewLeading = NSLayoutConstraint()
 	
-	func addAsset(_ asset: AVAsset) {
+	func addVideoAsset(_ asset: AVAsset) {
 		let videoAsset = VideoAsset(with: asset)
 		
 		ThumblineGenerator.shared.thumbnails(for: asset) { [weak self] (image) in
 			DispatchQueue.main.async {
 				videoAsset.thumbnailImage = image
-				self?.addNewAsset(videoAsset)
+				self?.addNewAsset(videoAsset, isAudio: false)
 			}
 		}
+	}
+	
+	func addAudioAsset(_ asset: AVAsset) {
+		let videoAsset = VideoAsset(with: asset, isAudio: true)
+		videoAsset.thumbnailImage = UIImage(named: "waveform")
+		self.addNewAsset(videoAsset, isAudio: true)
 	}
 	
 	func commonInit() {
@@ -85,7 +117,7 @@ class VideoTimelineView: UIView {
 	}
 	
 	func moveSeekerTo(position: CGFloat) {
-		let maxWidth = self.scrollView.contentSize.width
+		let maxWidth = self.videoScrollView.contentSize.width
 		if lineViewLeading.constant + position < 0 {
 			lineViewLeading.constant = 0
 		} else if (lineViewLeading.constant + position) > maxWidth {
@@ -109,19 +141,33 @@ class VideoTimelineView: UIView {
 	}
 	
 	func reloadTimeline() {
-		guard contentView.subviews.count == self.assets.count else {
+		guard videoContentView.subviews.count == self.videoAssets.count else {
 			assertionFailure("Scroll View should have same number of timeline view as assets")
 			return
 		}
 		
-		var lastTimelineView: UIView = UIView()
 		NSLayoutConstraint.deactivate(allTimelineConstraints)
 		allTimelineConstraints.removeAll()
 		
-		for idx in 0..<self.assets.count {
-			let videoAsset = self.assets[idx]
+		reloadTimeline(videoContentView, with: videoAssets)
+		
+		guard audioContentView.subviews.count == self.audioAssets.count else {
+			assertionFailure("Scroll View should have same number of timeline view as assets")
+			return
+		}
+		
+		reloadTimeline(audioContentView, with: audioAssets)
+		
+		NSLayoutConstraint.activate(allTimelineConstraints)
+	}
+	
+	private func reloadTimeline(_ contentView: UIView, with assets: [VideoAsset]) {
+		var lastTimelineView: UIView = UIView()
+		
+		for idx in 0 ..< assets.count {
+			let asset = assets[idx]
 			let timelineView = contentView.subviews[idx]
-			let assetWidth = videoAsset.width(byApplyingTrim: videoAsset.state != .trim)
+			let assetWidth = asset.width(byApplyingTrim: asset.state != .trim)
 			
 			var constraints = [
 				timelineView.topAnchor.constraint(equalTo: contentView.topAnchor),
@@ -135,52 +181,76 @@ class VideoTimelineView: UIView {
 				constraints += [timelineView.leadingAnchor.constraint(equalTo: lastTimelineView.trailingAnchor)]
 			}
 			
-			if idx == self.assets.count - 1 {
+			if idx == assets.count - 1 {
 				constraints += [timelineView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor)]
 			}
 			
 			allTimelineConstraints.append(contentsOf: constraints)
-			NSLayoutConstraint.activate(constraints)
 			
-			(timelineView as? TrimTimelineView)?.configure(videoAsset)
+			(timelineView as? TrimTimelineView)?.configure(asset)
 			lastTimelineView = timelineView
 		}
 	}
 	
-	func addNewAsset(_ asset: VideoAsset) {
-		self.assets.append(asset)
-		
+	func addNewAsset(_ asset: VideoAsset, isAudio: Bool) {
 		let timelineView = TrimTimelineView()
 		timelineView.translatesAutoresizingMaskIntoConstraints = false
 		timelineView.delegate = self
 		
-		contentView.addSubview(timelineView)
+		if isAudio == false {
+			self.videoAssets.append(asset)
+			videoContentView.addSubview(timelineView)
+		} else {
+			self.audioAssets.append(asset)
+			audioContentView.addSubview(timelineView)
+		}
 		
 		reloadTimeline()
 	}
 	
 	private func setConstraints() {
-		self.addSubview(scrollView)
-		scrollView.addSubview(contentView)
-		scrollView.addSubview(lineView)
+		self.addSubview(audioScrollView)
+		audioScrollView.addSubview(audioContentView)
 		
-		lineViewLeading = lineView.centerXAnchor.constraint(equalTo: scrollView.leadingAnchor)
+		self.addSubview(borderView)
+		self.addSubview(videoScrollView)
+		videoScrollView.addSubview(videoContentView)
+		videoScrollView.addSubview(lineView)
+		
+		lineViewLeading = lineView.centerXAnchor.constraint(equalTo: videoScrollView.leadingAnchor)
 		
 		let constraints = [
-			scrollView.leadingAnchor.constraint(equalTo: self.leadingAnchor),
-			scrollView.trailingAnchor.constraint(equalTo: self.trailingAnchor),
-			scrollView.topAnchor.constraint(equalTo: self.topAnchor),
-			scrollView.bottomAnchor.constraint(equalTo: self.bottomAnchor),
+			videoScrollView.leadingAnchor.constraint(equalTo: self.leadingAnchor),
+			videoScrollView.trailingAnchor.constraint(equalTo: self.trailingAnchor),
+			videoScrollView.topAnchor.constraint(equalTo: self.topAnchor),
+			videoScrollView.heightAnchor.constraint(equalToConstant: CGFloat(Constants.eachFrameHeight)),
 			
-			contentView.heightAnchor.constraint(equalTo: scrollView.heightAnchor),
-			contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
-			contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
-			contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
-			contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
+			borderView.leadingAnchor.constraint(equalTo: self.leadingAnchor),
+			borderView.trailingAnchor.constraint(equalTo: self.trailingAnchor),
+			borderView.topAnchor.constraint(equalTo: videoScrollView.bottomAnchor),
+			borderView.heightAnchor.constraint(equalToConstant: 1),
+			
+			audioScrollView.leadingAnchor.constraint(equalTo: self.leadingAnchor),
+			audioScrollView.trailingAnchor.constraint(equalTo: self.trailingAnchor),
+			audioScrollView.topAnchor.constraint(equalTo: borderView.bottomAnchor),
+			audioScrollView.bottomAnchor.constraint(equalTo: self.bottomAnchor),
+			audioScrollView.heightAnchor.constraint(equalToConstant: CGFloat(Constants.audioTimelineHeight)),
+			
+			videoContentView.heightAnchor.constraint(equalTo: videoScrollView.heightAnchor),
+			videoContentView.topAnchor.constraint(equalTo: videoScrollView.topAnchor),
+			videoContentView.bottomAnchor.constraint(equalTo: videoScrollView.bottomAnchor),
+			videoContentView.leadingAnchor.constraint(equalTo: videoScrollView.leadingAnchor),
+			videoContentView.trailingAnchor.constraint(equalTo: videoScrollView.trailingAnchor),
+			
+			audioContentView.heightAnchor.constraint(equalTo: audioScrollView.heightAnchor),
+			audioContentView.topAnchor.constraint(equalTo: audioScrollView.topAnchor),
+			audioContentView.bottomAnchor.constraint(equalTo: audioScrollView.bottomAnchor),
+			audioContentView.leadingAnchor.constraint(equalTo: audioScrollView.leadingAnchor),
+			audioContentView.trailingAnchor.constraint(equalTo: audioScrollView.trailingAnchor),
 			
 			lineViewLeading,
-			lineView.topAnchor.constraint(equalTo: scrollView.topAnchor),
-			lineView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor)
+			lineView.topAnchor.constraint(equalTo: videoScrollView.topAnchor),
+			lineView.bottomAnchor.constraint(equalTo: audioScrollView.bottomAnchor)
 		]
 		
 		NSLayoutConstraint.activate(constraints)
@@ -221,6 +291,6 @@ extension VideoTimelineView {
 	}
 	
 	func updateProgress(_ progress: Float) {
-		lineViewLeading.constant = self.scrollView.contentSize.width * CGFloat(progress)
+		lineViewLeading.constant = self.videoScrollView.contentSize.width * CGFloat(progress)
 	}
 }

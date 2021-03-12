@@ -14,9 +14,11 @@ class VideoAsset {
 	var startTrim: CGFloat = 0, endTrim: CGFloat = 0
 	var thumbnailImage: UIImage?
 	var state: TimelineViewState = .normal
+	var isAudio: Bool = false
 	
-	init(with asset: AVAsset) {
+	init(with asset: AVAsset, isAudio: Bool = false) {
 		self.asset = asset
+		self.isAudio = isAudio
 	}
 	
 	func width(byApplyingTrim state: Bool = false) -> CGFloat {

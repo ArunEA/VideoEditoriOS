@@ -10,8 +10,9 @@ import UIKit
 import Photos
 
 struct VideoEditor {
+	
 	static func merge(firstAsset: AVAsset?, secondAsset: AVAsset?, audioAsset: AVAsset?, videoContainer: UIView, completion: @escaping (AVAsset)->Void) {
-		guard let firstAsset = firstAsset, let secondAsset = secondAsset else { return }
+		guard let firstAsset = firstAsset else { return }
 		
 		let mixComposition = AVMutableComposition()
 		
@@ -27,37 +28,43 @@ struct VideoEditor {
 			return
 		}
 		
-		guard
-			let secondTrack = mixComposition.addMutableTrack(
-				withMediaType: .video,
-				preferredTrackID: Int32(kCMPersistentTrackID_Invalid))
-		else { return }
+		var totalDuration = firstAsset.duration
+		var finalRenderSize = getSize(firstAsset)
+		var secondInstruction: AVMutableVideoCompositionLayerInstruction? = nil
 		
-		do {
-			try secondTrack.insertTimeRange(
-				CMTimeRangeMake(start: .zero, duration: secondAsset.duration),
-				of: secondAsset.tracks(withMediaType: .video)[0],
-				at: firstAsset.duration)
-		} catch {
-			print("Failed to load second track")
-			return
+		if let secondAsset = secondAsset, let secondTrack = mixComposition.addMutableTrack(withMediaType: .video, preferredTrackID: Int32(kCMPersistentTrackID_Invalid))
+		{
+			do {
+				try secondTrack.insertTimeRange(
+					CMTimeRangeMake(start: .zero, duration: secondAsset.duration),
+					of: secondAsset.tracks(withMediaType: .video)[0],
+					at: firstAsset.duration)
+				totalDuration = CMTimeAdd(firstAsset.duration, secondAsset.duration)
+				
+				finalRenderSize = getRenderSize(firstAsset, secondAsset, videoContainer)
+				secondInstruction = VideoEditor.videoCompositionInstruction( secondTrack, asset: secondAsset, renderSize: finalRenderSize)
+			} catch {
+				print("Failed to load second track")
+				return
+			}
 		}
 		
 		// 3 - Composition Instructions
 		let mainInstruction = AVMutableVideoCompositionInstruction()
-		mainInstruction.timeRange = CMTimeRangeMake(
-			start: .zero,
-			duration: CMTimeAdd(firstAsset.duration, secondAsset.duration))
-		
-		let finalRenderSize = getRenderSize(firstAsset, secondAsset, videoContainer)
-		
+		mainInstruction.timeRange = CMTimeRangeMake( start: .zero,
+			duration: totalDuration)
+				
 		// 4 - Set up the instructions — one for each asset
 		let firstInstruction = VideoEditor.videoCompositionInstruction( firstTrack, asset: firstAsset, renderSize: finalRenderSize)
 		firstInstruction.setOpacity(0.0, at: firstAsset.duration)
-		let secondInstruction = VideoEditor.videoCompositionInstruction( secondTrack, asset: secondAsset, renderSize: finalRenderSize)
 		
 		// 5 - Add all instructions together and create a mutable video composition
-		mainInstruction.layerInstructions = [firstInstruction, secondInstruction]
+		if let secondInstruction = secondInstruction {
+			mainInstruction.layerInstructions = [firstInstruction, secondInstruction]
+		} else {
+			mainInstruction.layerInstructions = [firstInstruction]
+		}
+		
 		let mainComposition = AVMutableVideoComposition()
 		mainComposition.instructions = [mainInstruction]
 		mainComposition.frameDuration = CMTimeMake(value: 1, timescale: 30)
@@ -72,9 +79,7 @@ struct VideoEditor {
 				try audioTrack?.insertTimeRange(
 					CMTimeRangeMake(
 						start: CMTime.zero,
-						duration: CMTimeAdd(
-							firstAsset.duration,
-							secondAsset.duration)),
+						duration: totalDuration),
 					of: loadedAudioAsset.tracks(withMediaType: .audio)[0],
 					at: .zero)
 			} catch {
@@ -150,6 +155,11 @@ struct VideoEditor {
 		}
 		
 		return instruction
+	}
+	
+	static func getSize(_ asset1: AVAsset) -> CGSize {
+		let assetTrack1 = asset1.tracks(withMediaType: AVMediaType.video)[0]
+		return assetTrack1.naturalSize
 	}
 	
 	static func getRenderSize(_ asset1: AVAsset, _ asset2: AVAsset, _ container: UIView) -> CGSize {

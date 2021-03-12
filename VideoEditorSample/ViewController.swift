@@ -8,6 +8,7 @@
 import UIKit
 import AVFoundation
 import MobileCoreServices
+import MediaPlayer
 
 protocol ControllerTrimViewDelegate: class {
 	func trimStateChanged(state: TimelineViewState)
@@ -82,6 +83,9 @@ class ViewController: UIViewController {
 		//processAsset(asset1)
 		//processAsset(asset2)
 		
+		//let asset1 = AVAsset(url: URL(fileURLWithPath: Bundle.main.path(forResource: "audio", ofType:"m4r")!))
+		//processAudio(asset1)
+		
 		self.navigationItem.leftBarButtonItem = addButton
 		self.navigationItem.rightBarButtonItem = exportButton
 		
@@ -101,8 +105,7 @@ class ViewController: UIViewController {
 			timelineView.topAnchor.constraint(equalTo: videoContainerView.bottomAnchor),
 			timelineView.leadingAnchor.constraint(equalTo: margin.leadingAnchor),
 			timelineView.trailingAnchor.constraint(equalTo: margin.trailingAnchor),
-			timelineView.bottomAnchor.constraint(equalTo: margin.bottomAnchor),
-			timelineView.heightAnchor.constraint(equalToConstant: CGFloat(Constants.eachFrameHeight))
+			timelineView.bottomAnchor.constraint(equalTo: margin.bottomAnchor)
 		]
 		
 		NSLayoutConstraint.activate(constraints)
@@ -138,12 +141,11 @@ class ViewController: UIViewController {
 		}
 	}
 	
-	private func processAsset(_ asset: AVAsset) {
-		timelineView.addAsset(asset)
+	private func processVideo(_ asset: AVAsset) {
+		timelineView.addVideoAsset(asset)
 		playbackControls.isUserInteractionEnabled = true
 		
 		if let currentAsset = self.currentAsset {
-			
 			ActivitySpinner.shared.show(on: self.view)
 			
 			VideoEditor.merge(firstAsset: currentAsset, secondAsset: asset, audioAsset: nil, videoContainer: videoContainerView) { (mergedAsset) in
@@ -158,7 +160,48 @@ class ViewController: UIViewController {
 		}
 	}
 	
+	private func processAudio(_ asset: AVAsset) {
+		if let currentAsset = self.currentAsset {
+			ActivitySpinner.shared.show(on: self.view)
+			timelineView.addAudioAsset(asset)
+			
+			VideoEditor.merge(firstAsset: currentAsset, secondAsset: nil, audioAsset: asset, videoContainer: videoContainerView) { (mergedAsset) in
+				self.currentAsset = mergedAsset
+				self.setupPlayer(mergedAsset)
+				
+				ActivitySpinner.shared.hide()
+			}
+		} else {
+			let alert = UIAlertController(title: "Pick a video first", message: nil, preferredStyle: .alert)
+			alert.addAction(UIAlertAction(title: "Ok", style: .cancel, handler: nil))
+			self.present(alert, animated: true, completion: nil)
+		}
+	}
+	
 	@objc func add() {
+		let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+		alert.addAction(UIAlertAction(title: "Video", style: .default, handler: { _ in
+			self.selectVideos()
+		}))
+		alert.addAction(UIAlertAction(title: "Audio", style: .default, handler: { _ in
+			self.selectAudio()
+		}))
+		
+		if let view = alert.popoverPresentationController {
+			view.barButtonItem = addButton
+		}
+		
+		self.present(alert, animated: true, completion: nil)
+	}
+	
+	private func selectAudio() {
+		let mediaPickerController = MPMediaPickerController(mediaTypes: .any)
+		mediaPickerController.delegate = self
+		mediaPickerController.prompt = "Select Audio"
+		present(mediaPickerController, animated: true, completion: nil)
+	}
+	
+	private func selectVideos() {
 		// Ensure permission to access Photo Library
 		let status = VideoPicker.requestPermission { (permitted) in
 			if permitted {
@@ -268,8 +311,6 @@ extension ViewController: ControllerTrimViewDelegate {
 		case .select:
 			self.navigationItem.rightBarButtonItems = [trimEnableButton, deleteButton]
 			self.navigationItem.leftBarButtonItem = cancelButton
-			
-			
 		}
 	}
 }
@@ -279,13 +320,10 @@ extension ViewController: UINavigationControllerDelegate, UIImagePickerControlle
 		didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
 		dismiss(animated: true, completion: nil)
 		
-		guard let mediaType = info[UIImagePickerController.InfoKey.mediaType] as? String,
-			  mediaType == (kUTTypeMovie as String),
-			  let url = info[UIImagePickerController.InfoKey.mediaURL] as? URL
-		else { return }
+		guard let mediaType = info[UIImagePickerController.InfoKey.mediaType] as? String, mediaType == (kUTTypeMovie as String), let url = info[UIImagePickerController.InfoKey.mediaURL] as? URL else { return }
 		
 		let avAsset = AVAsset(url: url)
-		processAsset(avAsset)
+		processVideo(avAsset)
 		
 		let alert = UIAlertController(
 			title: "Asset Loaded",
@@ -297,6 +335,38 @@ extension ViewController: UINavigationControllerDelegate, UIImagePickerControlle
 							handler: nil))
 		
 		present(alert, animated: true, completion: nil)
+	}
+}
+
+extension ViewController: MPMediaPickerControllerDelegate {
+	func mediaPicker(_ mediaPicker: MPMediaPickerController, didPickMediaItems mediaItemCollection: MPMediaItemCollection) {
+		dismiss(animated: true) {
+			let selectedSongs = mediaItemCollection.items
+			guard let song = selectedSongs.first else { return }
+			
+			let title: String
+			let message: String
+			if let url = song.value(forProperty: MPMediaItemPropertyAssetURL) as? URL {
+				let audioAsset = AVAsset(url: url)
+				self.processAudio(audioAsset)
+				title = "Asset Loaded"
+				message = "Audio Loaded"
+			} else {
+				title = "Asset Not Available"
+				message = "Audio Not Loaded"
+			}
+			
+			let alert = UIAlertController(
+				title: title,
+				message: message,
+				preferredStyle: .alert)
+			alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: nil))
+			self.present(alert, animated: true, completion: nil)
+		}
+	}
+	
+	func mediaPickerDidCancel(_ mediaPicker: MPMediaPickerController) {
+		dismiss(animated: true, completion: nil)
 	}
 }
 

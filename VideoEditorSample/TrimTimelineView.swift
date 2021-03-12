@@ -37,6 +37,7 @@ class TrimTimelineView: UIView {
 	func configure(_ asset: VideoAsset?) {
 		self.videoAsset = asset
 		self.imageView.image = asset?.thumbnailImage
+		self.imageView.contentMode = asset?.isAudio == false ? .scaleAspectFit : .scaleToFill
 		
 		self.reloadView()
 	}
@@ -137,6 +138,7 @@ class TrimTimelineView: UIView {
 		imageView.contentMode = .scaleAspectFit
 		imageView.clipsToBounds = true
 		imageView.isUserInteractionEnabled = true
+		imageView.tintColor = .white
 		
 		return imageView
 	}()
@@ -241,8 +243,8 @@ class TrimTimelineView: UIView {
 		
 		leftEarWidth.constant = 20
 		rightEarWidth.constant = 20
-		imageViewLeading.constant = 20
-		imageViewTrailing.constant = -20
+		imageViewLeading.constant = 0
+		imageViewTrailing.constant = 0
 		selectView.isHidden = false
 				
 		leftEarLeading.constant = videoAsset.startTrim * videoAsset.width()
