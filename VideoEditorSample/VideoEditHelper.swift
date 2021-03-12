@@ -10,6 +10,148 @@ import UIKit
 import Photos
 
 struct VideoEditor {
+	static func merge(videoAssets: [AVAsset], audioAssets: [AVAsset], videoContainer: UIView, completion: @escaping (AVAsset)->Void) {
+		var totalDuration: CMTime = .zero
+		let mixComposition = AVMutableComposition()
+		var videoTracks = [AVMutableCompositionTrack]()
+		
+		// Prepare video tracks
+		videoAssets.forEach { (asset) in
+			if let track = prepareVideoTrack(for: asset, with: mixComposition, after: totalDuration) {
+				videoTracks.append(track)
+				totalDuration = totalDuration + asset.duration
+			}
+		}
+		
+		let finalRenderSize = renderSize(videoTracks, videoContainer)
+		
+		// Composition Instructions
+		let mainInstruction = AVMutableVideoCompositionInstruction()
+		mainInstruction.timeRange = CMTimeRangeMake( start: .zero,
+													 duration: totalDuration)
+		
+		var allInstructions = [AVMutableVideoCompositionLayerInstruction]()
+		
+		// Set up the instructions — one for each asset
+		var tempDuration: CMTime = .zero
+		for idx in 0..<videoTracks.count {
+			let track = videoTracks[idx]
+			let asset = videoAssets[idx]
+			
+			let instruction = VideoEditor.videoCompositionInstruction(track, asset: asset, renderSize: finalRenderSize)
+			allInstructions.append(instruction)
+			tempDuration = tempDuration + asset.duration
+			
+			if idx != videoTracks.count-1 {
+				instruction.setOpacity(0.0, at: tempDuration)
+			}
+		}
+		
+		mainInstruction.layerInstructions = allInstructions
+		
+		let mainComposition = AVMutableVideoComposition()
+		mainComposition.instructions = [mainInstruction]
+		mainComposition.frameDuration = CMTimeMake(value: 1, timescale: 30)
+		mainComposition.renderSize = finalRenderSize
+		
+		// Prepare audio tracks
+		var audioTracks = [AVMutableCompositionTrack]()
+		
+		var audioDuration: CMTime = .zero
+		audioAssets.forEach { (asset) in
+			if let track = prepareAudioTrack(for: asset, with: mixComposition, after: audioDuration, videoDuration: totalDuration) {
+				audioTracks.append(track)
+				audioDuration = audioDuration + asset.duration
+			}
+		}
+		
+		// Get path
+		guard
+			let documentDirectory = FileManager.default.urls(
+				for: .documentDirectory,
+				in: .userDomainMask).first
+		else { return }
+		let dateFormatter = DateFormatter()
+		dateFormatter.dateStyle = .long
+		dateFormatter.timeStyle = .short
+		let date = dateFormatter.string(from: Date())
+		let url = documentDirectory.appendingPathComponent("mergeVideo-\(date).mov")
+		
+		// 8 - Create Exporter
+		guard let exporter = AVAssetExportSession(
+				asset: mixComposition,
+				presetName: AVAssetExportPresetHighestQuality)
+		else { return }
+		exporter.outputURL = url
+		exporter.outputFileType = AVFileType.mov
+		exporter.shouldOptimizeForNetworkUse = true
+		exporter.videoComposition = mainComposition
+		
+		// 9 - Perform the Export
+		exporter.exportAsynchronously {
+			DispatchQueue.main.async {
+				if let outputURL = exporter.outputURL {
+					completion(AVAsset(url: outputURL))
+				}
+			}
+		}
+	}
+	
+	static func prepareVideoTrack(for asset: AVAsset, with composition: AVMutableComposition, after duration: CMTime) -> AVMutableCompositionTrack? {
+		guard let firstTrack = composition.addMutableTrack( withMediaType: .video, preferredTrackID: Int32(kCMPersistentTrackID_Invalid)) else { return nil }
+		
+		do {
+			try firstTrack.insertTimeRange(
+				CMTimeRangeMake(start: .zero, duration: asset.duration),
+				of: asset.tracks(withMediaType: .video)[0],
+				at: duration)
+		} catch {
+			print("Failed to load first track")
+			return nil
+		}
+		
+		return firstTrack
+	}
+	
+	static func prepareAudioTrack(for asset: AVAsset, with composition: AVMutableComposition, after duration: CMTime, videoDuration: CMTime) -> AVMutableCompositionTrack? {
+		let audioFinalDuration = videoDuration < (duration + asset.duration) ? (videoDuration - duration) : asset.duration
+		let audioTrack = composition.addMutableTrack(
+			withMediaType: .audio,
+			preferredTrackID: 0)
+		do {
+			try audioTrack?.insertTimeRange(
+				CMTimeRangeMake(
+					start: CMTime.zero,
+					duration: audioFinalDuration),
+				of: asset.tracks(withMediaType: .audio)[0],
+				at: duration)
+		} catch {
+			print("Failed to load Audio track")
+			return nil
+		}
+		
+		return audioTrack
+	}
+	
+	static func renderSize(_ videoTracks: [AVAssetTrack], _ container: UIView) -> CGSize {
+		var maxWidth: CGFloat = 0
+		var maxHeight: CGFloat = 0
+		
+		videoTracks.forEach { (track) in
+			maxWidth = max(maxWidth, track.naturalSize.width)
+			maxHeight = max(maxHeight, track.naturalSize.height)
+		}
+	
+		if let firstTrack = videoTracks.first {
+			let transform = firstTrack.preferredTransform
+			let assetInfo = orientationFromTransform(transform)
+			let scaleToFitRatio = assetInfo.isPortrait ? container.frame.size.height/maxHeight : container.frame.size.width/maxWidth
+			
+			return CGSize(width: scaleToFitRatio*maxWidth, height: scaleToFitRatio*maxHeight)
+		}
+		
+		return .zero
+	}
 	
 	static func merge(firstAsset: AVAsset?, secondAsset: AVAsset?, audioAsset: AVAsset?, videoContainer: UIView, completion: @escaping (AVAsset)->Void) {
 		guard let firstAsset = firstAsset else { return }

@@ -119,12 +119,13 @@ class ViewController: UIViewController {
 		}
 		let playerItem = AVPlayerItem(asset: asset)
 		self.player = AVPlayer(playerItem: playerItem)
+		self.player?.volume = 1.0
 		self.playerLayer.player = player
 		
 		self.videoContainerView.layer.addSublayer(playerLayer)
 		
 		self.player?.addPeriodicTimeObserver(forInterval: CMTime(seconds: 1, preferredTimescale: 2), queue: DispatchQueue.main) {[weak self] (progressTime) in
-			if let duration = self?.player?.currentItem?.duration {
+			if let duration = self?.player?.currentItem?.asset.duration {
 
 				let durationSeconds = CMTimeGetSeconds(duration)
 				let seconds = CMTimeGetSeconds(progressTime)
@@ -145,10 +146,13 @@ class ViewController: UIViewController {
 		timelineView.addVideoAsset(asset)
 		playbackControls.isUserInteractionEnabled = true
 		
-		if let currentAsset = self.currentAsset {
+		if self.currentAsset != nil {
 			ActivitySpinner.shared.show(on: self.view)
 			
-			VideoEditor.merge(firstAsset: currentAsset, secondAsset: asset, audioAsset: nil, videoContainer: videoContainerView) { (mergedAsset) in
+			let videos = timelineView.videoAssets.compactMap { $0.getTrimmedAsset() }
+			let audios = timelineView.audioAssets.compactMap { $0.getTrimmedAsset() }
+			
+			VideoEditor.merge(videoAssets: videos, audioAssets: audios, videoContainer: videoContainerView) { (mergedAsset) in
 				self.currentAsset = mergedAsset
 				self.setupPlayer(mergedAsset)
 				
@@ -161,11 +165,14 @@ class ViewController: UIViewController {
 	}
 	
 	private func processAudio(_ asset: AVAsset) {
-		if let currentAsset = self.currentAsset {
+		if self.currentAsset != nil {
 			ActivitySpinner.shared.show(on: self.view)
 			timelineView.addAudioAsset(asset)
 			
-			VideoEditor.merge(firstAsset: currentAsset, secondAsset: nil, audioAsset: asset, videoContainer: videoContainerView) { (mergedAsset) in
+			let videos = timelineView.videoAssets.compactMap { $0.getTrimmedAsset() }
+			let audios = timelineView.audioAssets.compactMap { $0.getTrimmedAsset() }
+			
+			VideoEditor.merge(videoAssets: videos, audioAssets: audios, videoContainer: videoContainerView) { (mergedAsset) in
 				self.currentAsset = mergedAsset
 				self.setupPlayer(mergedAsset)
 				
@@ -280,7 +287,7 @@ class ViewController: UIViewController {
 	}
 	
 	func forwardVideo(by seconds: Float64) {
-		if let currentTime = player?.currentTime(), let duration = player?.currentItem?.duration {
+		if let currentTime = player?.currentTime(), let duration = player?.currentItem?.asset.duration {
 			var newTime = CMTimeGetSeconds(currentTime) + seconds
 			if newTime >= CMTimeGetSeconds(duration) {
 				newTime = CMTimeGetSeconds(duration)
@@ -292,7 +299,7 @@ class ViewController: UIViewController {
 
 extension ViewController: ControllerTrimViewDelegate {
 	func seekTo(position: Double) {
-		if let totalDuration = player?.currentItem?.duration {
+		if let totalDuration = player?.currentItem?.asset.duration {
 			let seekTime = CMTimeGetSeconds(totalDuration) * position
 			let seekCmTime = CMTimeMake(value: CMTimeValue(seekTime * 1000), timescale: 1000)
 			
