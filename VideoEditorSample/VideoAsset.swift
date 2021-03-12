@@ -13,21 +13,25 @@ class VideoAsset {
 	var asset: AVAsset?
 	var startTrim: CGFloat = 0, endTrim: CGFloat = 0
 	var thumbnailImage: UIImage?
-	var isTrimming: Bool = false
+	var state: TimelineViewState = .normal
 	
 	init(with asset: AVAsset) {
 		self.asset = asset
 	}
 	
-	func widthForCell(isTrimming: Bool = true) -> CGSize {
+	func width(byApplyingTrim state: Bool = false) -> CGFloat {
 		guard let asset = self.asset else { return .zero }
 		let numberOfFrames = CMTimeGetSeconds(asset.duration) / Constants.eachPreviewDuration
 		
-		if isTrimming {
-			return CGSize(width: numberOfFrames * Constants.eachFrameWidth, height: Constants.eachFrameHeight)
+		if state == false {
+			return CGFloat(numberOfFrames * Constants.eachFrameWidth)
 		} else {
 			let numberOfFramesAfterTrim = numberOfFrames * Double(1 - (startTrim + endTrim))
-			return CGSize(width: numberOfFramesAfterTrim * Constants.eachFrameWidth, height: Constants.eachFrameHeight)
+			return CGFloat(numberOfFramesAfterTrim * Constants.eachFrameWidth)
 		}
 	}
+}
+
+enum TimelineViewState {
+	case normal, trim, select
 }

@@ -10,7 +10,7 @@ import AVFoundation
 
 protocol TrimViewDelegate: class {
 	func trimViewAdjusted(asset: VideoAsset?)
-	func trimStateChanged(isTrimming: Bool, cell: TrimTimelineView)
+	func trimStateChanged(state: TimelineViewState, cell: TrimTimelineView)
 }
 
 extension TrimViewDelegate {
@@ -19,9 +19,9 @@ extension TrimViewDelegate {
 
 class TrimTimelineView: UIView {
 	weak var delegate: TrimViewDelegate?
-	var isTrimming: Bool = false {
+	var state: TimelineViewState = .normal {
 		didSet {
-			trimStateChanged()
+			stateChanged()
 		}
 	}
 	
@@ -42,30 +42,13 @@ class TrimTimelineView: UIView {
 	}
 	
 	func reloadView() {
-		guard let videoAsset = self.videoAsset else { return }
-		
-		if isTrimming {
-			leftEarWidth.constant = 20
-			rightEarWidth.constant = 20
-			imageViewLeading.constant = 20
-			imageViewTrailing.constant = -20
-			trimView.isHidden = false
-			
-			guard let tAsset = self.videoAsset else { return }
-			
-			leftEarLeading.constant = tAsset.startTrim * videoAsset.widthForCell().width
-			rightEarTrailing.constant = -tAsset.endTrim * videoAsset.widthForCell().width
-		} else {
-			leftEarWidth.constant = 0
-			rightEarWidth.constant = 0
-			trimView.isHidden = true
-			leftEarLeading.constant = 0
-			rightEarTrailing.constant = 0
-			
-			guard let tAsset = self.videoAsset else { return }
-			
-			imageViewLeading.constant = -tAsset.startTrim * videoAsset.widthForCell().width
-			imageViewTrailing.constant = tAsset.endTrim * videoAsset.widthForCell().width
+		switch state {
+		case .normal:
+			switchToNormal()
+		case .trim:
+			switchToTrimMode()
+		case .select:
+			switchToSelectMode()
 		}
 	}
 	
@@ -101,8 +84,8 @@ class TrimTimelineView: UIView {
 		}
 		
 		if panGesture.state == UIGestureRecognizer.State.ended {
-			let leftAdjust = abs(leftEarLeading.constant / videoAsset.widthForCell().width)
-			let rightAdjust = abs(rightEarTrailing.constant / videoAsset.widthForCell().width)
+			let leftAdjust = abs(leftEarLeading.constant / videoAsset.width())
+			let rightAdjust = abs(rightEarTrailing.constant / videoAsset.width())
 			videoAsset.startTrim = leftAdjust
 			videoAsset.endTrim = rightAdjust
 			
@@ -122,7 +105,7 @@ class TrimTimelineView: UIView {
 		}
 		
 		if panGesture.state == UIGestureRecognizer.State.ended {
-			let leftAdjust = abs(leftEarLeading.constant) / videoAsset.widthForCell().width
+			let leftAdjust = abs(leftEarLeading.constant) / videoAsset.width()
 			let rightAdjust = abs(rightEarTrailing.constant) / imageView.frame.size.width
 			videoAsset.startTrim = leftAdjust
 			videoAsset.endTrim = rightAdjust
@@ -133,15 +116,19 @@ class TrimTimelineView: UIView {
 	
 	@objc func longPressed(gesture: UILongPressGestureRecognizer) {
 		if gesture.state == .began {
-			isTrimming = !isTrimming
+			if state == .normal {
+				state = .select
+			} else {
+				state = .normal
+			}
 		}
 	}
 	
-	private func trimStateChanged() {
+	private func stateChanged() {
 		self.reloadView()
 		
-		self.videoAsset?.isTrimming = isTrimming
-		delegate?.trimStateChanged(isTrimming: isTrimming, cell: self)
+		self.videoAsset?.state = state
+		delegate?.trimStateChanged(state: state, cell: self)
 	}
 	
 	internal lazy var imageView: UIImageView = {
@@ -170,7 +157,7 @@ class TrimTimelineView: UIView {
 		return earView
 	}()
 	
-	internal lazy var trimView: UIView = {
+	internal lazy var selectView: UIView = {
 		let view = UIView()
 		view.translatesAutoresizingMaskIntoConstraints = false
 		view.backgroundColor = UIColor(named: "TrimColor")
@@ -202,7 +189,7 @@ class TrimTimelineView: UIView {
 		self.addSubview(imageView)
 		self.addSubview(leftEarView)
 		self.addSubview(rightEarView)
-		self.addSubview(trimView)
+		self.addSubview(selectView)
 		
 		leftEarWidth = leftEarView.widthAnchor.constraint(equalToConstant: 0)
 		rightEarWidth = rightEarView.widthAnchor.constraint(equalToConstant: 0)
@@ -222,10 +209,10 @@ class TrimTimelineView: UIView {
 			leftEarLeading,
 			leftEarWidth,
 			
-			trimView.topAnchor.constraint(equalTo: imageView.topAnchor),
-			trimView.bottomAnchor.constraint(equalTo: imageView.bottomAnchor),
-			trimView.leadingAnchor.constraint(equalTo: leftEarView.trailingAnchor),
-			trimView.trailingAnchor.constraint(equalTo: rightEarView.leadingAnchor),
+			selectView.topAnchor.constraint(equalTo: imageView.topAnchor),
+			selectView.bottomAnchor.constraint(equalTo: imageView.bottomAnchor),
+			selectView.leadingAnchor.constraint(equalTo: leftEarView.trailingAnchor),
+			selectView.trailingAnchor.constraint(equalTo: rightEarView.leadingAnchor),
 			
 			rightEarView.topAnchor.constraint(equalTo: self.topAnchor),
 			rightEarView.bottomAnchor.constraint(equalTo: self.bottomAnchor),
@@ -234,5 +221,42 @@ class TrimTimelineView: UIView {
 		]
 		
 		NSLayoutConstraint.activate(constraints)
+	}
+	
+	func switchToNormal() {
+		guard let videoAsset = self.videoAsset else { return }
+		
+		leftEarWidth.constant = 0
+		rightEarWidth.constant = 0
+		selectView.isHidden = true
+		leftEarLeading.constant = 0
+		rightEarTrailing.constant = 0
+		
+		imageViewLeading.constant = -videoAsset.startTrim * videoAsset.width()
+		imageViewTrailing.constant = videoAsset.endTrim * videoAsset.width()
+	}
+	
+	func switchToTrimMode() {
+		guard let videoAsset = self.videoAsset else { return }
+		
+		leftEarWidth.constant = 20
+		rightEarWidth.constant = 20
+		imageViewLeading.constant = 20
+		imageViewTrailing.constant = -20
+		selectView.isHidden = false
+				
+		leftEarLeading.constant = videoAsset.startTrim * videoAsset.width()
+		rightEarTrailing.constant = -videoAsset.endTrim * videoAsset.width()
+	}
+	
+	func switchToSelectMode() {
+		leftEarWidth.constant = 0
+		rightEarWidth.constant = 0
+		imageViewLeading.constant = 0
+		imageViewTrailing.constant = 0
+		selectView.isHidden = false
+		
+		leftEarLeading.constant = 0
+		rightEarTrailing.constant = 0
 	}
 }

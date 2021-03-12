@@ -10,7 +10,7 @@ import AVFoundation
 
 class VideoTimelineView: UIView {
 	
-	private var currentTrimView: TrimTimelineView?
+	private var selectedTimelineView: TrimTimelineView?
 	private var allTimelineConstraints = [NSLayoutConstraint]()
 	
 	weak var delegate: ControllerTrimViewDelegate?
@@ -121,7 +121,7 @@ class VideoTimelineView: UIView {
 		for idx in 0..<self.assets.count {
 			let videoAsset = self.assets[idx]
 			let timelineView = contentView.subviews[idx]
-			let assetWidth = videoAsset.widthForCell(isTrimming: videoAsset.isTrimming).width
+			let assetWidth = videoAsset.width(byApplyingTrim: videoAsset.state != .trim)
 			
 			var constraints = [
 				timelineView.topAnchor.constraint(equalTo: contentView.topAnchor),
@@ -188,28 +188,36 @@ class VideoTimelineView: UIView {
 }
 
 extension VideoTimelineView: TrimViewDelegate {
-	func trimViewAdjusted(asset: VideoAsset?) {
-		
-	}
-	
-	func trimStateChanged(isTrimming: Bool, cell: TrimTimelineView) {
-		delegate?.trimStateChanged(isTrimming: isTrimming)
-		currentTrimView = isTrimming ? cell : nil
+	func trimStateChanged(state: TimelineViewState, cell: TrimTimelineView) {
+		delegate?.trimStateChanged(state: state)
+		selectedTimelineView = state != .normal ? cell : nil
 		
 		reloadTimeline()
+	}
+	
+	func trimViewAdjusted(asset: VideoAsset?) {
+		
 	}
 }
 
 extension VideoTimelineView {
+	func enableSelectView() {
+		selectedTimelineView?.state = .select
+	}
+	
+	func enableTrimView() {
+		selectedTimelineView?.state = .trim
+	}
+	
 	func applyTrim() {
-		currentTrimView?.isTrimming = false
+		selectedTimelineView?.state = .normal
 		reloadTimeline()
 	}
 	
 	func cancelTrim() {
-		currentTrimView?.videoAsset?.startTrim = 0
-		currentTrimView?.videoAsset?.endTrim = 0
-		currentTrimView?.isTrimming = false
+		selectedTimelineView?.videoAsset?.startTrim = 0
+		selectedTimelineView?.videoAsset?.endTrim = 0
+		selectedTimelineView?.state = .normal
 	}
 	
 	func updateProgress(_ progress: Float) {

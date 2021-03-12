@@ -10,7 +10,7 @@ import AVFoundation
 import MobileCoreServices
 
 protocol ControllerTrimViewDelegate: class {
-	func trimStateChanged(isTrimming: Bool)
+	func trimStateChanged(state: TimelineViewState)
 	func seekTo(position: Double)
 }
 
@@ -45,7 +45,7 @@ class ViewController: UIViewController {
 		return view
 	}()
 	
-	private lazy var mergeButton: UIBarButtonItem = {
+	private lazy var exportButton: UIBarButtonItem = {
 		let button = UIBarButtonItem(title: "Export", style: .done, target: self, action: #selector(export))
 		
 		return button
@@ -60,6 +60,18 @@ class ViewController: UIViewController {
 	private lazy var addButton = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(add))
 	
 	private lazy var cancelButton = UIBarButtonItem(barButtonSystemItem: .cancel, target: self, action: #selector(cancel))
+	
+	private lazy var trimEnableButton: UIBarButtonItem = {
+		let button = UIBarButtonItem(image: #imageLiteral(resourceName: "cut"), style: .plain, target: self, action: #selector(trimEnable))
+		
+		return button
+	}()
+	
+	private lazy var deleteButton: UIBarButtonItem = {
+		let button = UIBarButtonItem(image: #imageLiteral(resourceName: "delete"), style: .plain, target: self, action: #selector(deleteVideo))
+		
+		return button
+	}()
 		
 	override func viewDidLoad() {
 		super.viewDidLoad()
@@ -71,7 +83,7 @@ class ViewController: UIViewController {
 		//processAsset(asset2)
 		
 		self.navigationItem.leftBarButtonItem = addButton
-		self.navigationItem.rightBarButtonItem = mergeButton
+		self.navigationItem.rightBarButtonItem = exportButton
 		
 		view.addSubview(videoContainerView)
 		view.addSubview(playbackControls)
@@ -198,6 +210,14 @@ class ViewController: UIViewController {
 		timelineView.cancelTrim()
 	}
 	
+	@objc func trimEnable() {
+		timelineView.enableTrimView()
+	}
+	
+	@objc func deleteVideo() {
+		
+	}
+	
 	public func playVideo() {
 		player?.play()
 	}
@@ -237,13 +257,19 @@ extension ViewController: ControllerTrimViewDelegate {
 		}
 	}
 	
-	func trimStateChanged(isTrimming: Bool) {
-		if isTrimming {
-			self.navigationItem.rightBarButtonItem = trimButton
-			self.navigationItem.leftBarButtonItem = cancelButton
-		} else {
-			self.navigationItem.rightBarButtonItem = mergeButton
+	func trimStateChanged(state: TimelineViewState) {
+		switch state {
+		case .normal:
+			self.navigationItem.rightBarButtonItems = [exportButton]
 			self.navigationItem.leftBarButtonItem = addButton
+		case .trim:
+			self.navigationItem.rightBarButtonItems = [trimButton]
+			self.navigationItem.leftBarButtonItem = cancelButton
+		case .select:
+			self.navigationItem.rightBarButtonItems = [trimEnableButton, deleteButton]
+			self.navigationItem.leftBarButtonItem = cancelButton
+			
+			
 		}
 	}
 }
