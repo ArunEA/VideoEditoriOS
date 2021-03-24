@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		8D020E0625F5EC200037FBD4 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D020E0525F5EC200037FBD4 /* AppDelegate.swift */; };
-		8D020E0825F5EC200037FBD4 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D020E0725F5EC200037FBD4 /* SceneDelegate.swift */; };
 		8D020E0A25F5EC200037FBD4 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D020E0925F5EC200037FBD4 /* ViewController.swift */; };
 		8D020E0D25F5EC200037FBD4 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8D020E0B25F5EC200037FBD4 /* Main.storyboard */; };
 		8D020E0F25F5EC240037FBD4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8D020E0E25F5EC240037FBD4 /* Assets.xcassets */; };
@@ -33,7 +32,6 @@
 /* Begin PBXFileReference section */
 		8D020E0225F5EC200037FBD4 /* VideoEditorSample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VideoEditorSample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8D020E0525F5EC200037FBD4 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		8D020E0725F5EC200037FBD4 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		8D020E0925F5EC200037FBD4 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		8D020E0C25F5EC200037FBD4 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		8D020E0E25F5EC240037FBD4 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -87,7 +85,6 @@
 			isa = PBXGroup;
 			children = (
 				8D020E0525F5EC200037FBD4 /* AppDelegate.swift */,
-				8D020E0725F5EC200037FBD4 /* SceneDelegate.swift */,
 				8D020E0925F5EC200037FBD4 /* ViewController.swift */,
 				8D020E0B25F5EC200037FBD4 /* Main.storyboard */,
 				8D020E0E25F5EC240037FBD4 /* Assets.xcassets */,
@@ -190,7 +187,6 @@
 				8D020E5025F766320037FBD4 /* VideoTimelineView.swift in Sources */,
 				8D020E0625F5EC200037FBD4 /* AppDelegate.swift in Sources */,
 				8D020E7125F9FD650037FBD4 /* ActivitySpinner.swift in Sources */,
-				8D020E0825F5EC200037FBD4 /* SceneDelegate.swift in Sources */,
 				8D020E2925F600C60037FBD4 /* ThumblineGenerator.swift in Sources */,
 				8D020E7625FA24240037FBD4 /* PlaybackControl.swift in Sources */,
 				8D020E5825F78CA80037FBD4 /* VideoEditHelper.swift in Sources */,
@@ -349,7 +345,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 9722T8G52H;
 				INFOPLIST_FILE = VideoEditorSample/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -369,7 +365,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 9722T8G52H;
 				INFOPLIST_FILE = VideoEditorSample/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

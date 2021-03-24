@@ -25,7 +25,11 @@ class EarView: UIView {
 		super.init(frame: .zero)
 		
 		self.layer.borderWidth = 1.0
-		self.layer.borderColor = UIColor.label.cgColor
+		if #available(iOS 13.0, *) {
+			self.layer.borderColor = UIColor.label.cgColor
+		} else {
+			self.layer.borderColor = UIColor.black.cgColor
+		}
 		self.backgroundColor = UIColor(named: "EarColor")
 		self.imageView.image = UIImage(named: image)
 		

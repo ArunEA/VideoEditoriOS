@@ -122,6 +122,8 @@ class ViewController: UIViewController {
 		self.player?.volume = 1.0
 		self.playerLayer.player = player
 		
+		try! AVAudioSession.sharedInstance().setCategory(.playback)
+		
 		self.videoContainerView.layer.addSublayer(playerLayer)
 		
 		self.player?.addPeriodicTimeObserver(forInterval: CMTime(seconds: 1, preferredTimescale: 2), queue: DispatchQueue.main) {[weak self] (progressTime) in
